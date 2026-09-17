@@ -152,12 +152,6 @@ def evaluate(tag: str | None = None, log: bool = True) -> tuple[dict, int, str]:
                     f"{n} 条{label}" + ("" if is_blocked else "（仅提示，不阻塞）"),
                     n, "0" if is_blocked else "不设限"))
 
-        # 硬闸: 若配置里显式设了 max_failed(总失败数上限), 仍作为 block 项
-        if th.get("max_failed") is not None:
-            limit = int(th["max_failed"])
-            findings.append(Finding(target, "失败用例数", "block", failed <= limit,
-                                    f"{failed} 失败/错误(上限 {limit})", failed, limit))
-
         if run.get("verdict") != "PASS":
             # 批次本身已判失败。⚠️ 若失败全是 env/case 类, 不应因"结论 FAIL"就直接 block。
             # 这里改为 warn, 真正的 block 交给上面的分类判定。

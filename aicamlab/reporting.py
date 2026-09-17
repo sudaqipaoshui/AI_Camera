@@ -42,6 +42,19 @@ def _delta(cur, prev, unit: str = "", lower_is_better: bool = False) -> str:
     return f"{arrow}{abs(d):g}{unit} {'改善' if good else '变差'}"
 
 
+# 指标极性: 哪些指标是"越低越好"。默认按"越高越好"(如 accuracy/in_area)。
+# 与 gate.yaml 的 min/max 口径一致: 用 max 卡上限的指标(spread/invalid_areas/耗时/失败数)都是越低越好。
+_LOWER_IS_BETTER_PREFIXES = (
+    "spread",          # 极差(准确率的离散度)
+    "invalid_areas",   # 无效路数量
+)
+
+
+def _is_lower_better(name: str) -> bool:
+    n = (name or "").lower()
+    return any(n.startswith(p) for p in _LOWER_IS_BETTER_PREFIXES)
+
+
 def collect(limit: int = 60) -> dict:
     from aicamlab import recorder
 
@@ -161,7 +174,7 @@ def to_markdown(data: dict) -> str:
             lines += [head, "",
                       f"- 最新 **{vals[-1]:g}**   首次 {vals[0]:g}   "
                       f"最小 {min(vals):g}   最大 {max(vals):g}   样本 {len(vals)}",
-                      f"- 相对上一批：{_delta(vals[-1], vals[-2] if len(vals) > 1 else None)}", "",
+                      f"- 相对上一批：{_delta(vals[-1], vals[-2] if len(vals) > 1 else None, lower_is_better=_is_lower_better(name))}", "",
                       "| 批次 | 值 |", "|---|---|"]
             for run_id, val in series[-12:]:
                 lines.append(f"| {run_id} | {val:g} |")
@@ -287,7 +300,7 @@ def to_html(data: dict) -> str:
                 f"<tr><td>{esc(label)}</td><td class='num'>{vals[-1]:g}</td>"
                 f"<td class='num'>{vals[0]:g}</td><td class='num'>{min(vals):g}</td>"
                 f"<td class='num'>{max(vals):g}</td><td class='num'>{len(vals)}</td>"
-                f"<td>{esc(_delta(vals[-1], vals[-2] if len(vals) > 1 else None))}</td></tr>")
+                f"<td>{esc(_delta(vals[-1], vals[-2] if len(vals) > 1 else None, lower_is_better=_is_lower_better(name)))}</td></tr>")
         out.append("</table>")
 
     out.append("</body></html>")

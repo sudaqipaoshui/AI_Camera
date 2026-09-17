@@ -285,15 +285,15 @@ allure open allure-report/http-report
 
 | # | 问题 | 位置 |
 |---|------|------|
-| 1 | `config/id_rsa_ai_camera` 是明文 OpenSSH 私钥，且**全项目无任何代码引用**。已在 `.gitignore` 排除，建议移出仓库并确认是否需要吊销 | `config/` |
+| 1 | ~~`config/id_rsa_ai_camera` 明文 OpenSSH 私钥~~ **已移出仓库**：全项目零引用，已移到 `E:\AI_Camera_backup_20260917\_credentials_archive\` 留档；仍需确认是否吊销（见 `docs/CREDENTIAL_ROTATION.md` 第 4 步） | `config/` |
 | 2 | ~~`E2E/pytest_helper/` 与 `API/pytest_helper/` 重复~~ **已清理**：仅保留被 17 处引用的 `e2e_helper.py` + `__init__.py`，其余 7 个漂移副本（assertions/common/encryption/http_client/plugin/server/yapi_to_）已删除 | `E2E/pytest_helper/` |
 | 3 | `Log/` 混入约 100 个 `tmp_*.py` 探索脚本与设备 `item.json` 转储（含 device token / license）。已在 `.gitignore` 排除 `Log/tmp_*` | `Log/` |
 | 4 | 存在硬编码绝对路径（`E:\TestTools\...`、`192.168.2.124`）与写死的 venv 解释器路径 | `ReplayLab/run_test.py`、`ReplayLab/web/app.py`、`ReplayLab/start_replaylab.bat` |
-| 5 | 无 CI（无 `.github` / `Jenkinsfile` / `tox.ini`），全部手工触发 | 仓库根 |
+| 5 | ~~无 CI~~ **已接入**：`.github/workflows/ci.yml` 分层 CI —— `unit-test`（纯函数回归，云 runner 已跑绿）+ `api-test`（内网 self-hosted runner，需配 6 个 Secrets + 打 `aicamlab` 标签的 runner，暂未启用） | 仓库根 |
 | 6 | ~~报告是孤岛~~ **已解决**：`run.py report` 从结果库生成跨固件/批次趋势报告（MD+HTML），ReplayLab 网站有「历史与趋势」页 | 全局 |
 | 7 | E2E 用例是「录制」而非「用例」：`rope/` 下 22 个文件差异仅在时间戳与学校名。`E2E/data/*.yaml` 已有数据驱动雏形，建议收敛为「一个用例 + 一份 yaml」 | `E2E/tests/` |
 | 8 | ~~`longjump/` 用例沿用跳绳模板的 allure 标签~~ **已修复**：8 个文件 15 处错标签改为「跳远/立定跳远」 | `E2E/tests/longjump/` |
-| 9 | `camera.yaml` 的 `host` 段残留 4 个历史死键（`camera-prod`/`cameraA`/`cameraB`/`camera175`），数据文件按旧键取名会绕过设备注入，导致 ConnectTimeout 假失败 | `config/test/camera.yaml` |
+| 9 | ~~`camera.yaml` 的 `host` 段残留历史死键~~ **已归一**：`camera-prod` 死键已删，单设备死键归到 active `.60`；`cameraA`/`cameraB`/`camera175` 是双路 RTSP 起点/终点相机语义键（E2E 双机用例合法引用），保留并补注释 | `config/test/camera.yaml` |
 
 ### ✅ 近期已修复
 
