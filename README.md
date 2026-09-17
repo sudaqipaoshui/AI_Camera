@@ -20,9 +20,12 @@ AICameraTestLab/
 │       ├── race/             #     赛事配置
 │       ├── rtsp/             #     流媒体
 │       └── settings/         #     系统设置
+├── run.py                    # 统一测试平台入口（list/api/security/stability/.../gate/report）
+├── aicamlab/                 # 平台层：runner / pytest_plugin / recorder / reporting / gating / failure / redact / inventory
+├── gate.yaml                 # 发布门禁阈值（只阻塞"产品缺陷"类失败）
 ├── E2E/                      # 端到端实机测试（72 个文件 / 418 个用例，需显式指定）
 │   ├── data/                 #   用例数据（yaml）
-│   ├── pytest_helper/        #   ⚠️ 已被 API/pytest_helper 覆盖，见「已知问题」
+│   ├── pytest_helper/        #   仅 e2e_helper.py 在用，其余已删（见「已知问题」#2）
 │   └── tests/                #   rope / run / longjump / situp / pullup / rush / highknee
 ├── ReplayLab/                # 视频注入回放测试平台（详见下节）
 │   ├── run_test.py           #   一键流水线（命令行）
@@ -88,6 +91,23 @@ python -m pytest
 # 收集但不执行，查看清单
 python -m pytest --collect-only -q
 ```
+
+## 🎛️ 统一测试平台（run.py）
+
+一条命令跑任意模块、结果自动落库、出趋势报告、执行发布门禁。详见 skill `aicamlab-平台操作`。
+
+```bash
+python run.py list                  # 列出所有测试目标
+python run.py api --tag baseline    # 跑 API（结果写入测试库）
+python run.py smoke                 # 环境自检（解释器/配置/凭据/库/表/设备）
+python run.py report                # 生成趋势报告 reports/latest.html
+python run.py gate                  # 发布门禁（只阻塞"产品缺陷"类失败）
+```
+
+- **结果库**：`test_run` / `case_result` / `metric` 三张表（`SQL/04_schema_runs.sql`，幂等，绝不 DROP）。
+- **失败归因**：每条失败自动归类 `env`（环境）/ `case`（用例自身）/ `product`（产品缺陷）/ `unknown`，
+  门禁只对 `product` 卡流水线（口径见 `aicamlab/failure.py` 与 `gate.yaml`）。
+- **退出码**：0 通过 / 1 失败 / 2 用法 / 3 前置缺失 / 4 需确认。长任务（24h 监视）需 `--yes`。
 
 ## 🧪 各模块运行方式
 
@@ -266,13 +286,14 @@ allure open allure-report/http-report
 | # | 问题 | 位置 |
 |---|------|------|
 | 1 | `config/id_rsa_ai_camera` 是明文 OpenSSH 私钥，且**全项目无任何代码引用**。已在 `.gitignore` 排除，建议移出仓库并确认是否需要吊销 | `config/` |
-| 2 | `E2E/pytest_helper/` 与 `API/pytest_helper/` 重复。`conftest.py` 把 `API` 优先加入 `sys.path`，因此 **E2E 那份实际是死代码**，且两份已各自漂移 | `E2E/pytest_helper/` |
+| 2 | ~~`E2E/pytest_helper/` 与 `API/pytest_helper/` 重复~~ **已清理**：仅保留被 17 处引用的 `e2e_helper.py` + `__init__.py`，其余 7 个漂移副本（assertions/common/encryption/http_client/plugin/server/yapi_to_）已删除 | `E2E/pytest_helper/` |
 | 3 | `Log/` 混入约 100 个 `tmp_*.py` 探索脚本与设备 `item.json` 转储（含 device token / license）。已在 `.gitignore` 排除 `Log/tmp_*` | `Log/` |
 | 4 | 存在硬编码绝对路径（`E:\TestTools\...`、`192.168.2.124`）与写死的 venv 解释器路径 | `ReplayLab/run_test.py`、`ReplayLab/web/app.py`、`ReplayLab/start_replaylab.bat` |
 | 5 | 无 CI（无 `.github` / `Jenkinsfile` / `tox.ini`），全部手工触发 | 仓库根 |
-| 6 | 报告是孤岛：每批次产出独立报告，**没有跨固件版本的趋势对比** | 全局 |
+| 6 | ~~报告是孤岛~~ **已解决**：`run.py report` 从结果库生成跨固件/批次趋势报告（MD+HTML），ReplayLab 网站有「历史与趋势」页 | 全局 |
 | 7 | E2E 用例是「录制」而非「用例」：`rope/` 下 22 个文件差异仅在时间戳与学校名。`E2E/data/*.yaml` 已有数据驱动雏形，建议收敛为「一个用例 + 一份 yaml」 | `E2E/tests/` |
-| 8 | `longjump/` 用例沿用了跳绳模板的 allure 标签（`@allure.feature('跳绳全流程自动化测试')` / `@allure.story('1分钟跳绳')`），会让报告把跳远归到跳绳。仅 `Long_jump_automatic_template.py` 的分类正确 | `E2E/tests/longjump/` |
+| 8 | ~~`longjump/` 用例沿用跳绳模板的 allure 标签~~ **已修复**：8 个文件 15 处错标签改为「跳远/立定跳远」 | `E2E/tests/longjump/` |
+| 9 | `camera.yaml` 的 `host` 段残留 4 个历史死键（`camera-prod`/`cameraA`/`cameraB`/`camera175`），数据文件按旧键取名会绕过设备注入，导致 ConnectTimeout 假失败 | `config/test/camera.yaml` |
 
 ### ✅ 近期已修复
 
@@ -286,6 +307,10 @@ allure open allure-report/http-report
 | **ReplayLab 分析口径修正**：极差/均值排除未进 `SPORTING` 的无效路；报告区分"0 分"与"无数据"；识别并忽略尾部残轮 | 2026-09-17 |
 | **ReplayLab 坐标错位修复**：`polys8()` 叠加 `origin` 与 `make_grid8()` 对齐；`items.json` 的 `grid8` 布局消除第 2 行 45px 溢出；`--analyze-only` 路径的 `RESTORE_NOTE` 崩溃 | 2026-09-17 |
 | 测试数据库接通（`ai_camera_test` + `DbClient` + `is_fixture` 造数/清数约定），自检 10/10 | 2026-09-17 |
+| **统一测试平台建成**：`run.py` 入口 + 结果库 + 趋势报告 + 发布门禁 + 设备单一来源 + ReplayLab 历史页 | 2026-09-17 |
+| **失败表述层修复**：非 JSON 响应不再伪装成业务断言；修掉一个"设备不可达却判通过"的假通过缺陷（`False == 0`） | 2026-09-17 |
+| **失败归因 + 门禁口径**：`failure_class` 自动归类，门禁只阻塞"产品缺陷"类失败 | 2026-09-17 |
+| 清理死代码：`log_analyze.sh`/`http_test.sh`、`E2E/pytest_helper/` 7 个漂移副本；`longjump/` allure 错标签 | 2026-09-17 |
 
 ## 🛠️ 开发指南
 

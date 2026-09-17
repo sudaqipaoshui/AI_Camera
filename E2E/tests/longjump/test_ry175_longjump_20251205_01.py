@@ -22,8 +22,8 @@ startsportTime =  '20260109_165600'
 endTime =         '20260109_171000'
 
 
-@allure.feature('跳绳全流程自动化测试')
-@allure.story('1分钟跳绳')
+@allure.feature('跳远全流程自动化测试')
+@allure.story('立定跳远')
 class TestUpdateRtspSettings(object):
     # 时间相关类变量（由test_updateRtspSettings设置）
     logStartTime = None
