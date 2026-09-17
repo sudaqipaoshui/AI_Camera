@@ -50,6 +50,18 @@
 4. 重新登录一次拿新的 `YUNTIYU_X_TOKEN`，更新 `.env`
 5. 验证：`python -m pytest API/tests/settings/test_login.py -v`
 
+> **如何拿新的 X_TOKEN（2026-09-17 实测，无需网页验证码）**：
+> 平台网页登录才要图形验证码；**设备 API 不需要**。直接
+> `POST {host.camera}/camera/login`，body 为
+> `{"username": <账号>, "encodePassword": <口令的MD5>}`，
+> 返回 `code:0`，新 token 在 `data.authorization`（JWT，sub=账号名，
+> 含 deviceUnicode 绑定设备，exp 约 50 年）。
+> 拿到后：① 更新 `.env` 的 `YUNTIYU_X_TOKEN`；
+> ② 验证 `GET {host.camera}/camera/ping`（header `x_token`）应返回 `code:0`。
+> 注意账号必须已与该设备绑定，否则登录返回业务 405（换绑要走平台解绑/激活码，
+> 见 MEMORY.md「换绑账号」）。
+> `YUNTIYU_API_TOKEN` 是另一套 app 端 token（yuntiyu.yaml，配 secret 自动刷新），无需手动换。
+
 ### 第 2 步：MySQL 测试账号（需 DBA 配合）
 
 建议借这次机会把 `uad_test_rw`（读写）**降级为只读账号** —— 自动化测试不需要写权限。
@@ -75,6 +87,12 @@
 ⚠️ 另有一处**仓库外**的同口令残留：设备本机 `/userdata/camera_config/rtsp_config.json` 里
 `rtsp_link_info.channel0.passwd` 存着同一个口令（用于拉取 sensor 相机流）。
 该文件在设备上，不随改密自动更新 —— 改设备口令时一并核对，否则注入/拉流可能失效。
+
+> **2026-09-17 实测补充（.60 出厂态）**：`rtsp_config.json` 的 `channel0` 是
+> `user=admin`、`camera_ip=192.168.1.167`（sensor 摄像头模块），passwd 与设备 root
+> SSH 口令**当前同值**。两者是独立系统、各自校验：只改设备 root 密码不影响拉流
+> （rtsp 配置与 sensor 模块侧都不动）；但若改 sensor 模块的 admin 密码，必须同步
+> 设备上的 `rtsp_config.json` 并 reboot。
 
 **所有设备改完后**，仓库里 7 个文件的残留明文就彻底失效了。
 
@@ -146,3 +164,14 @@ git grep -nIE "(password|passwd|secret|token|licence|license)\s*[:=]\s*[\"']?[A-
 - [ ] 代码里禁止出现口令兜底默认值（`envloader.require` 会直接报错，这是刻意设计）
 - [ ] 定期轮换（建议随固件大版本发布同步做）
 - [ ] 条件允许时改用密钥认证替代口令，或上堡垒机统一管控
+
+---
+
+## 六、执行进度
+
+| 日期 | 项 | 结果 |
+|---|---|---|
+| 2026-09-17 | 第 0 步准备 | `.env` 已备份（`.env.bak_20260917_152147`） |
+| 2026-09-17 | 第 1 步 X_TOKEN | 旧 token 已失效（403）；经设备 API 重新登录（免验证码，方法见第 1 步内注释）取得新设备绑定 token，已写入 `.env` 并用 `/camera/ping` 验证 `code:0`；`test_login.py` 2 passed |
+| 2026-09-17 | 第 3 步设备 SSH | **用户决定暂不改**（维持现值）；另 `config/id_rsa_ai_camera` 已移出仓库留档 |
+| 待办 | 第 2/3 步 | MySQL 账号降级+改密（需 DBA）、设备 SSH 改密（影响面最大） |
