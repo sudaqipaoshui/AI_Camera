@@ -65,6 +65,8 @@ ap.add_argument("--no-restore", action="store_true",
                 help="跑完不还原设备配置(默认会还原; 仅手工调试注入态时才用)")
 ap.add_argument("--keep-video", action="store_true",
                 help="还原时保留已上传到设备的视频(默认删掉以回收空间)")
+ap.add_argument("--no-record", action="store_true",
+                help="不把本次结果写入测试库(默认会写, 库不可用时只警告不影响测试)")
 ARGS = ap.parse_args()
 
 if ARGS.item not in KB or ARGS.item.startswith("_"):
@@ -540,6 +542,7 @@ def analyze():
     lines = [f"各路轮数: { {a: len(v) for a, v in sorted(area_rounds.items())} }"]
     n_rounds = max((len(v) for v in area_rounds.values()), default=0)
     acc_map, in_map, invalid_map, noise_map = {}, {}, {}, {}
+    round_spreads = []   # 每轮"有效路"的极差, 供结果库记录(见下方 metrics)
     lines.append("\n=== 逐轮 ===")
     for ri in range(n_rounds):
         scores, accs, invalid = {}, {}, {}
@@ -578,7 +581,9 @@ def analyze():
         astr = ",".join(f"{a}:{v}" for a, v in accs.items())
         # 极差/均值只取有效路; 无有效路时明确标注而不是显示 0
         if vals:
-            spread = f"极差={max(vals)-min(vals)} 均值={sum(vals)/len(vals):.1f}"
+            spr = max(vals) - min(vals)
+            round_spreads.append(spr)
+            spread = f"极差={spr} 均值={sum(vals)/len(vals):.1f}"
         else:
             spread = "极差=-- 均值=-- (本轮无有效路)"
         inv = ""
@@ -609,12 +614,90 @@ def analyze():
     if noise_map:
         lines.append(f"注: 另有尾部残轮(采样点<{MIN_ROUND_SAMPLES}, 采集结束后残留) 已自动忽略: "
                      + ",".join(f"area{a}×{n}" for a, n in sorted(noise_map.items())))
+    # ---- 结构化指标: 供结果库记录, 让"准确率/极差/inArea"能出跨批次趋势 ----
+    # 口径与上面的文本报告完全一致, 不另立标准。只统计有效路(进过 SPORTING 的)。
+    metrics = []
+    per_area_acc = {}
+    in_vals = []
+    for a in sorted(in_map):
+        inr = in_map[a][0] / in_map[a][1] * 100 if in_map[a][1] else 0
+        in_vals.append(inr)
+        metrics.append({"name": "in_area", "subject": f"area{a}",
+                        "value": round(inr, 2), "unit": "%"})
+        accs = acc_map.get(a) or []
+        if accs:
+            avgr = sum(accs) / len(accs)
+            per_area_acc[a] = avgr
+            metrics.append({"name": "accuracy", "subject": f"area{a}",
+                            "value": round(avgr, 2), "unit": "%",
+                            "extra": {"valid_rounds": len(accs)}})
+    if per_area_acc:
+        metrics.append({"name": "accuracy", "subject": "all",
+                        "value": round(sum(per_area_acc.values()) / len(per_area_acc), 2),
+                        "unit": "%", "extra": {"areas": len(per_area_acc)}})
+    if in_vals:
+        metrics.append({"name": "in_area", "subject": "all",
+                        "value": round(sum(in_vals) / len(in_vals), 2), "unit": "%"})
+    if round_spreads:
+        # 极差是"每轮"指标: 默认取最后一轮(稳态), 另存全程最大/均值供对照
+        metrics.append({"name": "spread", "subject": "all",
+                        "value": round(round_spreads[-1], 2), "unit": ""})
+        metrics.append({"name": "spread_max", "subject": "all",
+                        "value": round(max(round_spreads), 2), "unit": ""})
+        metrics.append({"name": "spread_mean", "subject": "all",
+                        "value": round(sum(round_spreads) / len(round_spreads), 2),
+                        "unit": "", "extra": {"rounds": len(round_spreads)}})
+    # 数据完整性也落成指标: 无效路数量, 便于趋势上看"某格是不是一直起不来"
+    if invalid_map:
+        metrics.append({"name": "invalid_areas", "subject": "all",
+                        "value": len(invalid_map), "unit": "个",
+                        "extra": {f"area{a}": n for a, n in sorted(invalid_map.items())}})
+
     out = "\n".join(lines)
     print(out, flush=True)
-    return out
+    return out, metrics
 
 
 # ---------- 报告 ----------
+def record_to_platform(run_id, analysis, metrics, report_path, started_at=None):
+    """把本次 ReplayLab 结果写进测试库(test_run + metric), 让准确率/极差/inArea 能出趋势。
+
+    刻意做成"尽力而为": 库不可用、表没建、recorder 缺失, 都只打一行警告。
+    测试结果不能因为后台的数据库问题而被判失败。
+    """
+    if ARGS.no_record:
+        print("[结果库] 已按 --no-record 跳过", flush=True)
+        return
+    try:
+        import sys as _sys
+        _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if _root not in _sys.path:
+            _sys.path.insert(0, _root)
+        from aicamlab import recorder
+
+        now = datetime.datetime.now()
+        recorder.record_summary({
+            "run_id": run_id,
+            "target": "replay",
+            "tag": ARGS.item,
+            "started_at": (started_at or now).strftime("%Y-%m-%d %H:%M:%S"),
+            "finished_at": now.strftime("%Y-%m-%d %H:%M:%S"),
+            "duration_sec": (now - (started_at or now)).total_seconds(),
+            "exit_code": 0,
+            "verdict": "PASS",
+            "counts": {"total": 1, "passed": 1, "failed": 0, "skipped": 0, "error": 0},
+            "cases": [{"nodeid": f"replay::{ARGS.item}::{VNAME}",
+                       "name": CFG["name"], "module": "ReplayLab",
+                       "status": "passed", "duration_sec": 0,
+                       "message": RESTORE_NOTE}],
+            "note": f"视频={VNAME} grid8={ARGS.grid8} 时长={ARGS.duration}s 还原={RESTORE_NOTE}",
+        }, log_path=None, report_path=report_path, env="test")
+        n = recorder.record_metrics(run_id, metrics)
+        print(f"[结果库] 已写入 {run_id}: 1 批次 + {n} 个指标", flush=True)
+    except Exception as e:
+        print(f"[结果库] 写入失败(不影响测试结论): {type(e).__name__}: {e}", flush=True)
+
+
 def write_report(md_path, jsonl_path, analysis):
     md = f"""# ReplayLab 报告: {CFG['name']}
 
@@ -654,8 +737,11 @@ def main():
                 except Exception:
                     continue
                 (CAP if "si" in r else FR).append(r)
-        mdr = os.path.join(REPORTS, f"{ARGS.item}_re_{datetime.datetime.now().strftime('%H%M%S')}.md")
-        write_report(mdr, ARGS.analyze_only, analyze())
+        ts_re = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        mdr = os.path.join(REPORTS, f"{ARGS.item}_re_{ts_re}.md")
+        text, metrics = analyze()
+        write_report(mdr, ARGS.analyze_only, text)
+        record_to_platform(f"{ts_re}_replay_{ARGS.item}_re", text, metrics, mdr)
         print(f"[重分析] 报告: {mdr}", flush=True)
         return
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -694,8 +780,9 @@ def main():
                 RESTORE_NOTE = f"还原失败: {type(e).__name__}: {e}"
                 print(f"[还原] 失败: {type(e).__name__}: {e}", flush=True)
             print(f"[还原] {RESTORE_NOTE}", flush=True)
-    analysis = analyze()
-    write_report(md_path, jsonl_path, analysis)
+    text, metrics = analyze()
+    write_report(md_path, jsonl_path, text)
+    record_to_platform(f"{ts}_replay_{ARGS.item}", text, metrics, md_path)
     print(f"[完成] 报告: {md_path}", flush=True)
 
 

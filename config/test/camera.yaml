@@ -11,7 +11,10 @@ refresh_token: 1
 host:
   yuntiyu-test: https://yuntiyu-test.dream-sports.cn
   camera-prod: http://192.168.1.245
-  camera: http://192.168.2.30
+  # camera 由 config/devices.yaml 的 active 设备在运行时注入(覆盖此处的值),
+  # 70 个数据文件用 {{$.host.camera}} 决定"测哪台设备"。
+  # 这里保留一个占位值只为让配置自解释; 真正生效的是清单里的 IP。
+  camera: http://192.168.2.60
   cameraA: http://192.168.3.29
   cameraB: http://192.168.3.30
   camera175: http://192.168.3.175
@@ -33,19 +36,19 @@ users:
 
 licence: ${CAMERA_LICENCE}
 
-# ---------- X5 稳定性测试 SSH (当前主用 192.168.2.30) ----------
-ssh_host: 192.168.2.30
-ssh_username: root
-ssh_password: ${CAMERA_SSH_PASSWORD}
+# ---------- 设备身份: 不在这里写 ----------
+# 设备 IP / SSH 账号统一由 config/devices.yaml 提供, 由 env fixture 在运行时合并进来,
+# 因此 env['ssh_host'] / env['ssh_username'] / env['ssh_password'] 仍然照常用,
+# 但值的来源只有一处。
+#
+# 历史问题: 这里曾硬编码 `ssh_host: 192.168.2.30`(早已离线的旧实验机),
+# 导致 22 条真的去连设备的 API 用例必然失败。换设备请改 config/devices.yaml 的 active。
+#
+# X3 备用机同理, 在 devices.yaml 里切换即可, 不需要在这里切换注释。
+
+# SSH 连接参数(非身份信息, 对所有设备通用, 因此留在环境配置里)
 ssh_port: 22
 ssh_timeout: 30
-
-# ---------- X3 备用机 (需要时取消注释并切换) ----------
-# ssh_host: 192.168.1.245
-# ssh_username: root
-# ssh_password: ${X3_SSH_PASSWORD}
-# ssh_port: 22
-# ssh_timeout: 30
 
 environment: test
 proxy: false

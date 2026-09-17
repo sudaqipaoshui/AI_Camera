@@ -106,3 +106,7 @@ SQL/*_data_*.sql
 ReplayLab/items.json.bak_*
 ReplayLab/_item_tmp.json
 ReplayLab/_rtsp_tmp.json
+
+# ---------- 平台趋势报告 (派生数据, 可由结果库随时重生成) ----------
+# 注意: ReplayLab/reports/ 是模块级报告要入库; 这里忽略的是项目根的 reports/
+reports/

@@ -47,6 +47,37 @@ def pytest_addoption(parser):
     parser.addoption("--proxy", action="store_true",
                      help="need proxy or not")
 
+# ---------------------------------------------------------------------------
+# env 的返回值会被 pytest 打进断言失败输出(assertion rewriting 会把局部变量
+# 连同 repr 一起打印)。而本项目 env 里含展开后的明文凭据, 于是**只要有一条用例
+# 断言失败**, 口令就会进入: ① 控制台 ② allure 报告 ③ pytest 日志 ④ 结果库。
+# 让 env 返回一个 repr 已脱敏的 dict 子类, 从源头把这条路堵死。
+# 行为与 dict 完全一致(dict 子类), 用例代码无需改动。
+# ---------------------------------------------------------------------------
+try:
+    from aicamlab.redact import scrub as _scrub
+except Exception:  # 只把 API 目录单独拿出来跑时可能取不到, 退化为内置最小实现
+    import re as _re
+
+    _SECRET_KEY_RE = _re.compile(
+        r"([\"']?(?:password|passwd|token|x_token|authorization|secret|licence|"
+        r"ssh_pass|encodePassword)[\"']?\s*[:=]\s*)([\"']?)([^\"'\s,})]{2,})", _re.I)
+
+    def _scrub(text):
+        return _SECRET_KEY_RE.sub(lambda m: f"{m.group(1)}{m.group(2)}***", str(text))
+
+
+class SafeEnv(dict):
+    """与 dict 行为一致, 只是 repr / str 会把凭据遮掉。"""
+
+    __slots__ = ()
+
+    def __repr__(self):
+        return _scrub(dict.__repr__(self))
+
+    __str__ = __repr__
+
+
 @pytest.fixture(scope="session")
 def env(request, pytestconfig):
     """
@@ -80,7 +111,16 @@ def env(request, pytestconfig):
         'proxy': request.config.getoption("proxy"),
         # 'pytestconfig': pytestconfig.cache
     })
-    return env_config
+    # 设备身份(ip / ssh 账号)从 config/devices.yaml 注入 —— 单一来源, 见该文件顶部说明。
+    # 这么做的原因: 设备 IP 曾同时写在 camera.yaml 与 items.json 里且不一致,
+    # 其中 camera.yaml 指着早已离线的旧机器, 让 22 条真的连设备的用例必然失败。
+    # 注入后 env['ssh_host'] 等键的用法不变, 只是值不再由本文件决定。
+    try:
+        from aicamlab.inventory import apply_to_env
+        env_config = apply_to_env(env_config)
+    except Exception:
+        pass
+    return SafeEnv(env_config)
 
 
 @pytest.fixture(scope='session', autouse=True)

@@ -38,7 +38,8 @@ DB_PORT = 3306
 ROOT_PWD_ENV = "LOCAL_MYSQL_ROOT_PASSWORD"
 APP_PWD_ENV = "AICAM_MYSQL_PASSWORD"
 
-SQL_FILES = ["01_create_db_and_user.sql", "02_schema.sql", "03_seed.sql"]
+SQL_FILES = ["01_create_db_and_user.sql", "02_schema.sql", "03_seed.sql",
+             "04_schema_runs.sql"]
 
 
 def gen_password(length: int = 24) -> str:

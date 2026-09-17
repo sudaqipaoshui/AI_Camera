@@ -48,6 +48,17 @@ app.config["MAX_CONTENT_LENGTH"] = None                     # 允许大视频上
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0                 # 静态资源不缓存, 前端更新即生效
 app.json.ensure_ascii = False                               # 中文不转义(Flask3写法, JSON_AS_ASCII已废弃)
 
+# 平台视图: 把测试结果库(test_run / case_result / metric)接到同一个界面上。
+# 独立成 blueprint, 库不可用时只让那几个接口返回 ok=false, 不影响本页原有的
+# 视频库/发起测试/报告中心等功能。
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+try:
+    from platform_api import bp as _platform_bp
+    app.register_blueprint(_platform_bp)
+except Exception as _exc:  # pragma: no cover
+    print(f"[warn] 平台视图接口未加载: {type(_exc).__name__}: {_exc}")
+
 TASKS = {}
 TLOCK = threading.Lock()
 

@@ -1,0 +1,52 @@
+# ============================================================
+# 设备清单 —— 全项目唯一的"设备身份"来源
+#
+# 这里只回答一个问题: **是哪台设备**（型号 / IP / SSH 账号 / 授权 token）。
+#
+# 不放在这里的东西:
+#   * ReplayLab 的注入执行细节(设备上视频目录 / rtsp_config 路径 / item.json 路径 /
+#     日志 glob) 仍在 ReplayLab/items.json 的 _env.devices —— 那是"怎么注入"的知识。
+#   * 平台侧的视频源与固件库地址在 ReplayLab/items.json 的 _env(http_host / http_port)。
+#
+# 为什么要有这个文件
+# ------------------
+# 历史上设备 IP 同时写死在三个地方且互不一致:
+#   camera.yaml     ssh_host: 192.168.2.30      <- 早已离线的旧实验机
+#   items.json      _env.active: X5_192_168_2_60
+#   deploy_camera.sh DEFAULT_CAMERA_IPS=("192.168.2.30")
+# 结果是: API 用例里凡是真的去连设备的, 必然失败(实测 22/90)。
+# 改一处忘一处的代价太高, 因此收敛为单一来源, 其余位置引用本文件。
+#
+# 换设备: 只改下面的 active, 然后 python run.py smoke 复核。
+# 凭据仍然只写 ${VAR}, 真值在项目根 .env。
+# ============================================================
+
+active: X5_192_168_2_60
+
+devices:
+  X5_192_168_2_60:
+    name: 黄浦学校 X5
+    model: X5
+    ip: 192.168.2.60
+    ssh_user: root
+    ssh_pass: ${CAMERA_SSH_PASSWORD}
+    token: ""                 # 留空则用 .env 的 YUNTIYU_X_TOKEN
+    note: 当前主用设备; rtsp 配置为出厂原样
+
+  X5_192_168_2_30:
+    name: 实验机 X5
+    model: X5
+    ip: 192.168.2.30
+    ssh_user: root
+    ssh_pass: ${CAMERA_SSH_PASSWORD}
+    token: ""
+    note: 早期 ReplayLab 注入调试机, 2026-09-16 已还原; 目前常离线, 不要设为默认
+
+  X3_192_168_2_222:
+    name: X3 备用机
+    model: X3
+    ip: 192.168.2.222
+    ssh_user: root
+    ssh_pass: ${X3_SSH_PASSWORD}
+    token: ""
+    note: 备用, 需要时切换

@@ -1,0 +1,79 @@
+# ============================================================
+# 发布门禁阈值
+#
+# 用法: python run.py gate          # 判定最近批次是否放行
+#       python run.py gate --json   # 给 CI 用
+#
+# severity:
+#   block —— 不满足就判定 FAIL, 退出码非零, 卡住流水线
+#   warn  —— 只提示, 不影响结论(用于已知缺陷、观察期指标)
+# ============================================================
+version: 1
+
+# 所有目标共用的默认门槛, 可被 targets 下的同名项覆盖
+defaults:
+  max_failed: 0            # 允许的失败用例数(含 error)
+  max_skipped_pct: 20      # 跳过占比上限(%), 跳太多通常意味着环境不对
+  max_age_hours: 336       # 批次最大年龄(14 天), 超期视为"没有有效数据"
+
+# 按目标覆盖
+targets:
+  api:
+    max_failed: 0
+  security:
+    max_failed: 0
+  e2e:
+    max_failed: 0
+    max_skipped_pct: 40    # E2E 依赖真机, 允许更多跳过
+  replay:
+    max_failed: 0
+
+# 必须存在的批次 —— 缺了说明"证据不足", 直接不放行
+# 只放离线可跑的目标, 避免门禁因为没借到设备而永远红着
+required_targets:
+  - api
+
+# 指标门槛(取该目标 + 该标签下最近一个批次的 metric 表数据)
+# ⚠️ tag 必须写: ReplayLab 一个 target 下混着多个运动项目(跳绳/开合跳/...),
+#    不区分 tag 就会拿"开合跳的 area6"去判"跳绳的 area6"。
+metrics:
+  - target: replay
+    tag: rope                # 跳绳
+    name: accuracy
+    subject: all
+    min: 90
+    unit: "%"
+    severity: block
+
+  - target: replay
+    tag: rope
+    name: in_area
+    subject: all
+    min: 80
+    unit: "%"
+    severity: warn
+
+  - target: replay
+    tag: rope
+    name: spread
+    subject: all
+    max: 40
+    severity: warn
+
+  - target: replay
+    tag: kaihetiao           # 开合跳(健康基线, 用它防回归)
+    name: accuracy
+    subject: all
+    min: 95
+    unit: "%"
+    severity: warn
+
+  # area6 已知存在人物遮挡导致的采集缺陷(见 ReplayLab/reports/_诊断_rope_area6失败_20260917.md),
+  # 业务侧解决遮挡之前不堵塞流水线, 只留痕。
+  - target: replay
+    tag: rope
+    name: invalid_areas      # 无效路数量, 比"准确率"更能直说"有几格没起来"
+    subject: all
+    max: 1
+    severity: warn
+    note: "已知遮挡缺陷, 观察期"

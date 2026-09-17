@@ -272,6 +272,9 @@ def config_from_local_env() -> dict[str, Any]:
         "database": envloader.get("LOCAL_MYSQL_DATABASE", "ai_camera_test"),
         "charset": "utf8mb4",
         "autocommit": True,
+        # 与 yaml 配置里的口径保持一致(都返回 dict)。
+        # 否则"在 pytest 里拿到 dict、在 run.py/report 里拿到 tuple", 调用方得写两套取值逻辑。
+        "cursorclass": "pymysql.cursors.DictCursor",
     }
 
 

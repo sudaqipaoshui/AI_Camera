@@ -145,6 +145,33 @@
       </div>
     </div>
   </section>
+
+  <!-- 平台视图: 历史批次与趋势(数据来自本机测试库) -->
+  <section class="card" id="sec-platform">
+    <h2><span class="ico">📈</span>历史与趋势
+      <button class="mini" id="pfRefresh">刷新</button>
+      <button class="mini" id="pfMakeReport">生成趋势报告</button>
+      <span class="hint" id="pfHint"></span>
+    </h2>
+    <div class="row">
+      <label>目标</label>
+      <select id="pfTarget"><option value="">全部</option></select>
+      <span class="hint" id="pfStatus"></span>
+    </div>
+    <div class="tablewrap">
+      <table id="pfRunTable">
+        <thead><tr><th>批次</th><th>目标</th><th>开始</th><th>通过率</th><th>失败</th>
+          <th>耗时</th><th>固件</th><th>标签</th><th>结论</th></tr></thead>
+        <tbody id="pfRunList"></tbody>
+      </table>
+    </div>
+    <div id="pfDetail" class="repview" style="display:none"></div>
+    <div id="pfTrend" class="pf-trend"></div>
+    <div class="hint" style="font-size:12px">
+      数据来自本机测试库 ai_camera_test 的 test_run / case_result / metric。
+      其余模块的批次由 <code>python run.py &lt;目标&gt;</code> 写入。
+    </div>
+  </section>
 </main>
 
 <!-- 设备管理弹窗 -->
@@ -184,5 +211,6 @@
 <footer>ReplayLab · AI 摄像头视频注入测试平台 · 数据目录 E:\TestTools · 报告归档 reports/</footer>
 <script src="/static/app.js"></script>
 <script src="/static/project.js"></script>
+<script src="/static/platform.js"></script>
 </body>
 </html>
