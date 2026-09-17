@@ -8,6 +8,7 @@ import codecs
 import copy
 import json
 import jsonpath
+from pytest_helper.errors import NonJsonForCheck
 """
 result_compare方法为返回包自动全匹配方法，只需要将返回包按照json的层级结构转成yaml的格式，放到断言的yaml文件中，即可自动解析所有层级的字段并与真实返回包进行匹配
 建议使用方法: assert result_compare(response, expectation["response"]["data"]) == True
@@ -45,7 +46,26 @@ tests:
 """
 
 
+def _require_mapping(response, where):
+    """jsonpath 只能作用于 dict/list。
+
+    拿到 bytes / None 时直接给出明确原因 —— 否则 jsonpath 会静默返回 False，
+    最终报出 `check_key: xxx`，让人误以为是业务字段缺失，
+    而真实原因往往是连接层故障返回了非 JSON 文本。
+    """
+    if isinstance(response, (dict, list)):
+        return
+    raise NonJsonForCheck(response, where=where)
+
+
+def _brief(value, limit=200):
+    """把断言里期望/实际值压成一行，避免超长对象淹没失败信息。"""
+    text = repr(value)
+    return text if len(text) <= limit else text[:limit] + '...'
+
+
 def result_compare(response, expected):
+    _require_mapping(response, 'result_compare')
     expected_list = list()
     for i in expected.keys():
         expected_list.append(i)
@@ -113,6 +133,7 @@ def result_compare(response, expected):
 
 
 def free_compare(response, expectation, all=False, sort=True):
+    _require_mapping(response, 'free_compare')
 
     for jpath in expectation['response'].keys():
         if jpath[:6] == '_keys_':
@@ -145,14 +166,28 @@ def free_compare(response, expectation, all=False, sort=True):
             expect = expectation['response'][jpath]
             if all == False:
                 if actual == False:
-                    assert actual == expect, 'check_key: ' + jpath
+                    # jsonpath 未命中 -> 响应里根本没有这个路径。
+                    # 明确区分「路径不存在」与「值不符」，否则两者都报 check_key，无法归因。
+                    assert actual == expect, (
+                        f'check_key: {jpath} —— jsonpath 未命中该路径(响应中不存在), '
+                        f'期望 {_brief(expect)}'
+                    )
                 else:
-                    assert actual[0] == expect, 'check_key: ' + jpath
+                    assert actual[0] == expect, (
+                        f'check_key: {jpath} —— 值不符, '
+                        f'期望 {_brief(expect)}, 实际 {_brief(actual[0])}'
+                    )
             else:
                 if sort == True:
-                    assert sorted(actual) == sorted(expect), 'check_key: ' + jpath
+                    assert sorted(actual) == sorted(expect), (
+                        f'check_key: {jpath} —— 集合不符, '
+                        f'期望 {_brief(expect)}, 实际 {_brief(actual)}'
+                    )
                 else:
-                    assert actual == expect, 'check_key: ' + jpath
+                    assert actual == expect, (
+                        f'check_key: {jpath} —— 值不符, '
+                        f'期望 {_brief(expect)}, 实际 {_brief(actual)}'
+                    )
 def show_json(json_obj):
     obj = copy.deepcopy(json_obj)
     _convert_obj(obj)

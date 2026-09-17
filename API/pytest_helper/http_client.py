@@ -17,6 +17,7 @@ import requests
 
 from pytest_helper.common import render, DateEncoder
 from pytest_helper.encryption import rsa, sha3256, des3_encrypt, get_encryption2
+from pytest_helper.errors import NonJsonResponse
 # from pytest_helper.signature import moatkeeper_signature, uds_sig, vbom_sign, do_admin_sign, bd_sign
 import copy
 from urllib.parse import urlparse
@@ -117,12 +118,27 @@ class TSPRequest(object):
             r.encoding = 'utf-8'
             try:
                 response = r.json()
-                response_txt = json.dumps(response, indent=2, ensure_ascii=False, cls=DateEncoder)
             except (JSONDecodeError, requests.exceptions.JSONDecodeError):
-                # requests may raise its own JSONDecodeError (a subclass different from json.JSONDecodeError)
-                # Fallback to raw content / text so the caller can inspect the non-JSON response.
-                response = r.content
-                response_txt = r.text
+                # 非 JSON 响应：**不要**静默返回 bytes。
+                #
+                # 历史行为是 `response = r.content`，结果连接层故障
+                # （例如设备/网关不可达时返回 b'upstream connect failed: ...'）
+                # 会被伪装成业务断言失败：
+                #   - 测试里 response['code'] -> TypeError: byte indices must be integers...
+                #   - 断言层 jsonpath 返回 False -> AssertionError: check_key: code
+                # 两种信息都与真实原因无关，导致"跑完不知道结论可不可信"。
+                # 现在在源头抛带上下文的显式异常，失败信息自解释。
+                raw_text = r.text
+                allure.attach(raw_text or "(空响应体)", '响应结果(非 JSON)')
+                logging.error("响应不是 JSON:\n" + (raw_text or "(空响应体)"))
+                raise NonJsonResponse(
+                    url=inputs.get('host', '') + inputs.get('path', ''),
+                    status_code=r.status_code,
+                    content_type=r.headers.get('Content-Type'),
+                    body=raw_text,
+                    method=inputs.get('method'),
+                ) from None
+            response_txt = json.dumps(response, indent=2, ensure_ascii=False, cls=DateEncoder)
             allure.attach(response_txt, '响应结果')
             logging.info("响应结果\n" + response_txt)
             return response
