@@ -1,0 +1,29 @@
+common_inputs:
+  host: '{{$.host.cameraA}}'
+  method: POST
+  path: /camera/faceMode
+  params: {}
+  headers:
+    Content-Type: application/json
+tests:
+- case: /faceMode=0
+  input:
+    json:
+      recog_type: 0
+  expectation:
+    response:
+      code: 0
+
+# - case: /faceMode=1
+#   input:
+#     json:
+#       recog_type: 0
+#   expectation:
+#     response:
+#       code: 0
+
+# - case: /faceMode=null
+#   input:
+#   expectation:
+#     response:
+#       code: -1

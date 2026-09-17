@@ -1,0 +1,14 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: GET
+  path: /control/getVersion
+  params: {}
+  headers:
+    Content-Type: application/json
+tests:
+- case: /camera/getVersion
+  input:
+  expectation:
+    response:
+      Code: 200
+      # Version: 1.0.0-x5-test

@@ -1,0 +1,16 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /camera/faceMode
+  params: {}
+  headers:
+    Content-Type: application/json
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: /camera/faceMode
+  input:
+    json:
+      recog_type: 1
+  expectation:
+    response:
+      code: 0

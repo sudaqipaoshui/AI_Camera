@@ -1,0 +1,52 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: GET
+  headers:
+    Content-Type: application/json
+
+tests:
+- case: X5摄像头24小时稳定性测评
+  input:
+    path: /control/CheckSensorConnect
+    params: {}
+  expectation:
+    response:
+      Code: 200
+      Message: Success
+
+- case: X5摄像头MIPI连接测试
+  input:
+    path: /control/CheckSensorConnect
+    params: {}
+  expectation:
+    response:
+      Code: 200
+      Message: Success
+
+- case: X5摄像头RTSP连接测试
+  input:
+    path: /rtsp/getRtspSettings
+    params: {}
+  expectation:
+    response:
+      Code: 200
+      Message: Success
+
+- case: X5摄像头系统信息获取
+  input:
+    path: /rtsp/getCmaSysInfo
+    params: {}
+  expectation:
+    response:
+      Code: 200
+      Message: Success
+
+- case: X5摄像头配置信息获取
+  input:
+    path: /rtsp/getCameraCfgAttr
+    params: {}
+  expectation:
+    response:
+      Code: 200
+      Message: Success
+

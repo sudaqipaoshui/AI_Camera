@@ -1,0 +1,16 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /camera/changeExerciseModel
+  params: {}
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+tests:
+- case: /camera/changeExerciseModel
+  input:
+    params:
+      id: '17'
+      exercise: '0'
+  expectation:
+    response:
+      code: 0

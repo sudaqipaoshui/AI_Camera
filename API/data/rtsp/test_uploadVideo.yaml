@@ -1,0 +1,14 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /camera/uploadVideo
+  params: {}
+  headers:
+    Content-Type: multipart/form-data
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: /camera/uploadVideo
+  input:
+  expectation:
+    response:
+      code: 0

@@ -1,0 +1,224 @@
+{
+  "_readme": "ReplayLab 项目知识库: 每个运动项目的接口差异/计数字段/golden曲线/点位布局。新增项目时复制模板填入实测值。",
+  "_env": {
+    "active": "X5_192_168_2_60",
+    "devices": {
+      "X3_192_168_2_222": {
+        "name": "X3",
+        "model": "X3",
+        "ip": "192.168.2.222",
+        "ssh_user": "root",
+        "ssh_pass": "",
+        "video_dir_device": "/userdata/video",
+        "rtsp_config": "/userdata/camera_config/rtsp_config.json",
+        "item_json": "/userdata/item.json",
+        "log_glob": "/userdata/deploy/log/logger_$(date +%Y-%m-%d_%H).log",
+        "token": ""
+      },
+      "X5_192_168_2_60": {
+        "name": "x5",
+        "model": "X5",
+        "ip": "192.168.2.60",
+        "ssh_user": "root",
+        "ssh_pass": "",
+        "video_dir_device": "/userdata/video",
+        "rtsp_config": "/userdata/camera_config/rtsp_config.json",
+        "item_json": "/userdata/item.json",
+        "log_glob": "/userdata/deploy/log/logger_$(date +%Y-%m-%d_%H).log",
+        "token": ""
+      }
+    },
+    "http_host": "192.168.2.124",
+    "http_port": 8000,
+    "ffmpeg": "E:/TestTools/ffmpeg/bin/ffmpeg.exe",
+    "serve_dir": "E:/TestTools"
+  },
+  "kaihetiao": {
+    "name": "开合跳",
+    "itemId": 28,
+    "score_field": "score",
+    "timer": null,
+    "need_start_sport": false,
+    "visitor_auto_session": true,
+    "join": {
+      "testers": 8,
+      "note": "visitor模式下joinSport持久化,重启后自动恢复"
+    },
+    "golden": {
+      "type": "piecewise",
+      "points": [
+        [
+          5,
+          0
+        ],
+        [
+          10,
+          18
+        ],
+        [
+          15,
+          27
+        ],
+        [
+          20,
+          36
+        ],
+        [
+          25,
+          46
+        ],
+        [
+          30,
+          58
+        ],
+        [
+          40,
+          70
+        ],
+        [
+          45,
+          78
+        ],
+        [
+          50,
+          88
+        ],
+        [
+          55,
+          97
+        ],
+        [
+          60,
+          106
+        ],
+        [
+          62.5,
+          109
+        ]
+      ],
+      "loop_frames": 1878,
+      "fps": 30,
+      "total_per_loop": 109,
+      "source": "kaihetiao_4k_20m.mp4 OSD烧录"
+    },
+    "grid8": {
+      "crop": "1320:1410:1140:750",
+      "scale": "912:990",
+      "canvas": "3840x2160",
+      "cell": [
+        960,
+        1080
+      ],
+      "origin": [
+        24,
+        45
+      ],
+      "inset_px": 10,
+      "layouts": [
+        [
+          24,
+          45
+        ],
+        [
+          984,
+          45
+        ],
+        [
+          1944,
+          45
+        ],
+        [
+          2904,
+          45
+        ],
+        [
+          24,
+          1125
+        ],
+        [
+          984,
+          1125
+        ],
+        [
+          1944,
+          1125
+        ],
+        [
+          2904,
+          1125
+        ]
+      ]
+    },
+    "verified": {
+      "date": "2026-09-14",
+      "acc_avg": "99.7-101.4%",
+      "spread": "1-6",
+      "inArea": "93-96%"
+    }
+  },
+  "rope": {
+    "name": "跳绳",
+    "itemId": 17,
+    "score_field": "ropeScore",
+    "timer": 60,
+    "need_start_sport": true,
+    "start_sport": {
+      "time": 66,
+      "delayTime": 1
+    },
+    "visitor_auto_session": false,
+    "join": {
+      "testers": 8,
+      "note": "join前必须startSport,否则10002"
+    },
+    "golden": {
+      "type": "final",
+      "scores": [
+        125,
+        138,
+        102,
+        115,
+        127,
+        153,
+        139,
+        138
+      ],
+      "total": 1726,
+      "round_sec": 60,
+      "fps": 30,
+      "source": "Log/golden/双脚跳绳.json 人工读数OSD(同源8路跳绳)",
+      "note": "timer=60项目: 每路每轮最终成绩(smax)对比scores[areaIndex]; 数值待真机校准",
+      "area_base": 1
+    },
+    "grid8": null,
+    "verified": {
+      "date": "baseline",
+      "note": "设备默认项目,reboot后自动回到id=17"
+    }
+  },
+  "_template": {
+    "name": "新项目名",
+    "itemId": 0,
+    "score_field": "score|ropeScore|...",
+    "timer": "60|null",
+    "need_start_sport": "true|false",
+    "start_sport": {
+      "time": 60,
+      "delayTime": 1
+    },
+    "visitor_auto_session": "true|false",
+    "join": {
+      "testers": 8,
+      "note": ""
+    },
+    "golden": {
+      "type": "piecewise",
+      "points": [],
+      "loop_frames": 0,
+      "fps": 30,
+      "total_per_loop": 0
+    },
+    "grid8": null,
+    "verified": {}
+  }
+}

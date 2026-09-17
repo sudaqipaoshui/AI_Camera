@@ -1,0 +1,15 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: GET
+  path: /control/CheckSensorConnect
+  params: {}
+  headers:
+    Content-Type: application/json
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: /CheckSensorConnect
+  input:
+  expectation:
+    response:
+      code: 0
+      data.cma_sensor: ai_camera_v2

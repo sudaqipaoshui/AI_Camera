@@ -1,0 +1,223 @@
+{
+  "projects": [
+    {
+      "type": "face_body",
+      "config_dir": "face_body_configs",
+      "path": "/Users/sonic/DreamSports/X5/deploy/body_solution/face_body_configs"
+    },
+    {
+      "type": "pose_bytetrack",
+      "config_dir": "pose_bytetrack_configs",
+      "path": "/Users/sonic/DreamSports/X5/deploy/body_solution/pose_bytetrack_configs"
+    },
+    {
+      "type": "item_kps_object",
+      "config_dir": "item_kps_object_configs",
+      "path": "/Users/sonic/DreamSports/X5/deploy/body_solution/item_kps_object_configs"
+    },
+    {
+      "type": "person_head",
+      "config_dir": "person_head_configs",
+      "path": "/Users/sonic/DreamSports/X5/deploy/body_solution/person_head_configs"
+    },
+    {
+      "type": "around_pole",
+      "config_dir": "around_pole_configs",
+      "path": "/Users/sonic/DreamSports/X5/deploy/body_solution/around_pole_configs"
+    },
+    {
+      "type": "point_17",
+      "config_dir": "point_17_configs",
+      "path": "/Users/sonic/DreamSports/X5/deploy/body_solution/point_17_configs"
+    },
+    {
+      "type": "rope_body",
+      "config_dir": "rope_body_configs",
+      "path": "/Users/sonic/DreamSports/X5/deploy/body_solution/rope_body_configs"
+    },
+    {
+      "type": "point_25",
+      "config_dir": "point_25_configs",
+      "path": "/Users/sonic/DreamSports/X5/deploy/body_solution/point_25_configs"
+    },
+    {
+      "type": "face",
+      "config_dir": "face_configs",
+      "path": "/Users/sonic/DreamSports/X5/deploy/body_solution/face_configs"
+    },
+    {
+      "type": "item_kps",
+      "config_dir": "item_kps_configs",
+      "path": "/Users/sonic/DreamSports/X5/deploy/body_solution/item_kps_configs"
+    },
+    {
+      "type": "race",
+      "config_dir": "race_configs",
+      "path": "/Users/sonic/DreamSports/X5/deploy/body_solution/race_configs"
+    },
+    {
+      "type": "hand_lmk",
+      "config_dir": "hand_lmk_configs",
+      "path": "/Users/sonic/DreamSports/X5/deploy/body_solution/hand_lmk_configs"
+    }
+  ],
+  "models": [
+    {
+      "name": "edgenext_base.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/edgenext_base.bin"
+    },
+    {
+      "name": "edgenext_base_int16.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/edgenext_base_int16.bin"
+    },
+    {
+      "name": "emopose_s_4mshe_delattn_negative_ep158_725.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/emopose_s_4mshe_delattn_negative_ep158_725.bin"
+    },
+    {
+      "name": "emopose_s_4mshe_delattn_negative_ep160_723.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/emopose_s_4mshe_delattn_negative_ep160_723.bin"
+    },
+    {
+      "name": "emopose_s_mshe_delattn_ep415_748.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/emopose_s_mshe_delattn_ep415_748.bin"
+    },
+    {
+      "name": "emopose_s_mshe_delattn_merge2_ep415_748.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/emopose_s_mshe_delattn_merge2_ep415_748.bin"
+    },
+    {
+      "name": "ktx_best.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/ktx_best.bin"
+    },
+    {
+      "name": "person_head_640x384_nv12.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/person_head_640x384_nv12.bin"
+    },
+    {
+      "name": "point_17_nv12.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/point_17_nv12.bin"
+    },
+    {
+      "name": "point_25_nv12.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/point_25_nv12.bin"
+    },
+    {
+      "name": "pose_power.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/pose_power.bin"
+    },
+    {
+      "name": "ppocrv5_mobile_det_numberplate_train_static.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/ppocrv5_mobile_det_numberplate_train_static.bin"
+    },
+    {
+      "name": "ppocrv5_mobile_rec_numberplate_train_static.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/ppocrv5_mobile_rec_numberplate_train_static.bin"
+    },
+    {
+      "name": "pytorch_face_landmarks_pfld.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/pytorch_face_landmarks_pfld.bin"
+    },
+    {
+      "name": "rope_640x384_nv12.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/rope_640x384_nv12.bin"
+    },
+    {
+      "name": "rtmpose_17s_256.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/rtmpose_17s_256.bin"
+    },
+    {
+      "name": "rtmpose_26s_256.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/rtmpose_26s_256.bin"
+    },
+    {
+      "name": "webface_r50.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/webface_r50.bin"
+    },
+    {
+      "name": "yolo11n_detect_bayese_640x640_nv12_modified.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/yolo11n_detect_bayese_640x640_nv12_modified.bin"
+    },
+    {
+      "name": "yolo11n_pose_bayese_640x640_nv12_modified.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/yolo11n_pose_bayese_640x640_nv12_modified.bin"
+    },
+    {
+      "name": "yolov11_bayese_640x640_nv12.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/yolov11_bayese_640x640_nv12.bin"
+    },
+    {
+      "name": "yolov11_bk_fb_vb_modified.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/yolov11_bk_fb_vb_modified.bin"
+    },
+    {
+      "name": "yolov8_person_ball_pole_640x384_nv12.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/yolov8_person_ball_pole_640x384_nv12.bin"
+    },
+    {
+      "name": "yolov8_sxq_640x384_nv12.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/yolov8_sxq_640x384_nv12.bin"
+    },
+    {
+      "name": "yolov8_vb_640x384_nv12.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/yolov8_vb_640x384_nv12.bin"
+    },
+    {
+      "name": "yolov8s_pose_640x384_nv12.bin",
+      "type": "bin",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/yolov8s_pose_640x384_nv12.bin"
+    },
+    {
+      "name": "faceLandmark106pts.hbm",
+      "type": "hbm",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/faceLandmark106pts.hbm"
+    },
+    {
+      "name": "gestureDet_32x21.hbm",
+      "type": "hbm",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/gestureDet_32x21.hbm"
+    },
+    {
+      "name": "gestureDet_8x21.hbm",
+      "type": "hbm",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/gestureDet_8x21.hbm"
+    },
+    {
+      "name": "handLMKs.hbm",
+      "type": "hbm",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/handLMKs.hbm"
+    },
+    {
+      "name": "multitask_body_head_face_hand_kps_960x544.hbm",
+      "type": "hbm",
+      "path": "/Users/sonic/DreamSports/X5/deploy/models/multitask_body_head_face_hand_kps_960x544.hbm"
+    }
+  ],
+  "total_projects": 12,
+  "total_models": 31
+}

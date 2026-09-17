@@ -1,0 +1,31 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /camera/guestMode
+  params: {}
+  headers:
+    Content-Type: application/json
+tests:
+- case: /guestMode=true
+  input:
+    json:
+      visitor: false
+  expectation:
+    response:
+      code: 0
+      visitor: 0
+
+- case: /guestMode=false
+  input:
+    json:
+      visitor: true
+  expectation:
+    response:
+      code: 0
+      visitor: 1
+
+- case: /guestMode=null
+  input:
+  expectation:
+    response:
+      code: -1

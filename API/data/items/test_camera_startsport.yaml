@@ -1,0 +1,15 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /camera/startSport
+  params: {}
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+tests:
+- case: /camera/startSport
+  input:
+    params:
+      time: '60'
+  expectation:
+    response:
+      code: 0

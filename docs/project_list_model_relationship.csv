@@ -1,0 +1,33 @@
+项目ID,项目,分类,模型,模型分类
+5,坐位体前屈,体测项目,yolov8s_pose_640x384_nv12.bin,yolov8s_pose_640x384_nv12
+24,肺活量,体测项目,未知模型,未知模型
+19,教学项目,其他项目,yolov8s_pose_640x384_nv12.bin,yolov8s_pose_640x384_nv12
+27,高抬腿,其他项目,yolov8s_pose_640x384_nv12.bin,yolov8s_pose_640x384_nv12
+51,提膝击掌,其他项目,"gestureDet_32x21.hbm, handLMKs.hbm",gestureDet_32x21
+11,引体向上,力量项目,multitask_body_head_face_hand_kps_960x544.hbm,multitask_body_head_face_hand_kps_960x544
+12,仰卧起坐,力量项目,yolov8s_pose_640x384_nv12.bin,yolov8s_pose_640x384_nv12
+30,深蹲,力量项目,yolov8s_pose_640x384_nv12.bin,yolov8s_pose_640x384_nv12
+153,侧向蹲起,力量项目,yolov8s_pose_640x384_nv12.bin,yolov8s_pose_640x384_nv12
+249,半蹲,力量项目,yolov8s_pose_640x384_nv12.bin,yolov8s_pose_640x384_nv12
+250,足球踩球,球类项目,"yolov8_person_ball_pole_640x384_nv12.bin, yolov8s_pose_640x384_nv12.bin",yolov8_person_ball_pole_640x384_nv12
+251,篮球运球,球类项目,"yolov8_person_ball_pole_640x384_nv12.bin, yolov8s_pose_640x384_nv12.bin",yolov8_person_ball_pole_640x384_nv12
+3,50米跑,跑步项目,person_head_640x384_nv12.bin,person_head_640x384_nv12
+14,1000米跑,跑步项目,"multitask_body_head_face_hand_kps_960x544.hbm, faceLandmark106pts.hbm",multitask_body_head_face_hand_kps_960x544
+15,800米跑,跑步项目,"multitask_body_head_face_hand_kps_960x544.hbm, faceLandmark106pts.hbm",multitask_body_head_face_hand_kps_960x544
+50,50x8往返跑,跑步项目,未知模型,未知模型
+74,3000米跑,跑步项目,"multitask_body_head_face_hand_kps_960x544.hbm, faceLandmark106pts.hbm",multitask_body_head_face_hand_kps_960x544
+92,100米跑,跑步项目,person_head_640x384_nv12.bin,person_head_640x384_nv12
+154,200米跑,跑步项目,person_head_640x384_nv12.bin,person_head_640x384_nv12
+155,400米跑,跑步项目,person_head_640x384_nv12.bin,person_head_640x384_nv12
+166,跑圈训练,跑步项目,"multitask_body_head_face_hand_kps_960x544.hbm, faceLandmark106pts.hbm",multitask_body_head_face_hand_kps_960x544
+244,1500米跑,跑步项目,"multitask_body_head_face_hand_kps_960x544.hbm, faceLandmark106pts.hbm",multitask_body_head_face_hand_kps_960x544
+254,5000米跑,跑步项目,"multitask_body_head_face_hand_kps_960x544.hbm, faceLandmark106pts.hbm",multitask_body_head_face_hand_kps_960x544
+255,30米跑,跑步项目,person_head_640x384_nv12.bin,person_head_640x384_nv12
+258,60米跑,跑步项目,person_head_640x384_nv12.bin,person_head_640x384_nv12
+9,立定跳远,跳跃项目,"person_head_640x384_nv12.bin, multitask_body_head_face_hand_kps_960x544.hbm",person_head_640x384_nv12
+17,跳绳,跳跃项目,yolov8s_pose_640x384_nv12.bin,yolov8s_pose_640x384_nv12
+28,开合跳,跳跃项目,yolov8s_pose_640x384_nv12.bin,yolov8s_pose_640x384_nv12
+31,蹲跳,跳跃项目,yolov8s_pose_640x384_nv12.bin,yolov8s_pose_640x384_nv12
+126,弓步跳,跳跃项目,yolov8s_pose_640x384_nv12.bin,yolov8s_pose_640x384_nv12
+127,纵跳,跳跃项目,yolov8s_pose_640x384_nv12.bin,yolov8s_pose_640x384_nv12
+152,左右跳,跳跃项目,yolov8s_pose_640x384_nv12.bin,yolov8s_pose_640x384_nv12

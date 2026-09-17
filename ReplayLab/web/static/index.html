@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReplayLab · 视频注入测试平台</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1><span class="brand"><span class="dot"></span>ReplayLab</span><span class="sub">视频注入测试平台</span></h1>
+  <div class="devbox">
+    <span class="devlabel">设备</span>
+    <select id="deviceSelect"></select>
+    <span class="devtag" id="deviceInfo"></span>
+    <span class="devtag fwtag" id="fwInfo" title="当前设备固件版本"></span>
+    <button class="mini ghost" id="devMgrBtn" title="设备管理">⚙</button>
+  </div>
+  <span class="env" id="envInfo"></span>
+</header>
+
+<main>
+  <!-- 发起测试 -->
+  <section class="card" id="sec-config">
+    <h2><span class="ico">🚀</span>发起测试</h2>
+    <div class="row">
+      <label>运动项目</label>
+      <select id="itemSelect"></select>
+      <span class="tag" id="itemMeta"></span>
+    </div>
+    <div class="row">
+      <label>采集时长(秒)</label>
+      <input id="duration" type="number" value="800" min="60" step="10">
+      <label class="chk"><input type="checkbox" id="grid8"> 先做8格拼贴</label>
+      <label class="chk"><input type="checkbox" id="skipDeploy"> 跳过部署(设备已在跑)</label>
+    </div>
+    <div class="row">
+      <button id="runBtn" class="primary">开始测试</button>
+      <span id="runHint" class="hint"></span>
+    </div>
+  </section>
+
+  <!-- 视频库 -->
+  <section class="card" id="sec-videos">
+    <h2><span class="ico">📹</span>选择视频 <button class="mini" id="refreshVideos">刷新</button></h2>
+    <div class="upload">
+      <input type="file" id="uploadFile" accept=".mp4">
+      <button id="uploadBtn">上传到视频库</button>
+      <span id="uploadHint" class="hint"></span>
+    </div>
+    <div class="tablewrap">
+      <table id="videoTable">
+        <thead><tr><th></th><th>文件名</th><th>大小</th><th>修改时间</th></tr></thead>
+        <tbody id="videoList"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 任务日志 -->
+  <section class="card" id="sec-task">
+    <h2><span class="ico">📊</span>运行状态 <span class="tag" id="taskStatus">空闲</span></h2>
+    <div id="taskList" class="tasks"></div>
+    <pre id="taskLog" class="log">尚未发起测试。</pre>
+  </section>
+
+  <!-- 报告中心 -->
+  <section class="card" id="sec-reports">
+    <h2><span class="ico">📋</span>报告中心 <button class="mini" id="refreshReports">刷新</button>
+      <button class="mini" id="cmpBtn">对比所选</button></h2>
+    <div class="repwrap">
+      <div id="reportList" class="replist"></div>
+      <div id="reportView" class="repview">点击左侧报告查看内容; 勾选2个后点"对比所选"并排对比。</div>
+    </div>
+  </section>
+
+  <!-- 项目管理 -->
+  <section class="card" id="sec-project">
+    <h2><span class="ico">⚙️</span>项目管理 <span class="hint">新增/编辑 · 录golden · 框点位</span></h2>
+    <div class="row">
+      <label>项目</label>
+      <select id="projSelect"></select>
+      <button class="mini" id="projNew">+ 新建项目</button>
+      <span id="projHint" class="hint"></span>
+    </div>
+    <div id="projEditor" style="display:none">
+      <div class="subsec">
+        <h3>基本信息</h3>
+        <div class="row">
+          <label>名称</label><input id="pName" style="width:110px">
+          <label>itemId</label><input id="pItemId" type="number" style="width:70px">
+          <label>计数字段</label><input id="pScoreField" style="width:110px">
+          <label>timer秒(空=无)</label><input id="pTimer" type="number" style="width:70px">
+        </div>
+        <div class="row">
+          <label class="chk"><input type="checkbox" id="pNeedStart">需startSport</label>
+          <label class="chk"><input type="checkbox" id="pVisitor">visitor自动会话</label>
+          <label>join人数</label><input id="pTesters" type="number" style="width:60px">
+        </div>
+      </div>
+
+      <div class="subsec">
+        <h3>golden 基准</h3>
+        <div class="row">
+          <label>类型</label>
+          <select id="pGType">
+            <option value="final">final · 计时计数(每路最终成绩)</option>
+            <option value="piecewise">piecewise · 时间曲线(分段点)</option>
+          </select>
+          <span class="hint" id="pGHint"></span>
+        </div>
+        <div id="gFinal" class="row" style="display:none;flex-wrap:wrap">
+          <label>8路成绩</label><span id="pScores"></span>
+          <label>合计</label><input id="pTotal" type="number" style="width:80px">
+        </div>
+        <div id="gPiece" style="display:none">
+          <div class="row">
+            <label>loop帧数</label><input id="pLoop" type="number" style="width:90px">
+            <label>每轮总数</label><input id="pPerLoop" type="number" style="width:80px">
+            <label>fps</label><input id="pFps" type="number" style="width:60px" value="30">
+          </div>
+          <div id="pPoints"></div>
+          <button class="mini" id="pAddPoint">+ 加分段点</button>
+        </div>
+      </div>
+
+      <div class="subsec">
+        <h3>框点位 <span class="hint">单人视频→8格拼贴; 真实8路视频无需此项</span></h3>
+        <div class="row">
+          <label>视频</label><select id="pVideo" style="max-width:240px"></select>
+          <label>时刻秒</label><input id="pFrameT" type="number" value="5" style="width:64px">
+          <button class="mini" id="pLoadFrame">抽帧</button>
+          <span class="hint">在图上按住拖框出单人有效区域</span>
+        </div>
+        <canvas id="pCanvas" width="960" height="540"></canvas>
+        <div class="row">
+          <span id="pCropInfo" class="hint">未框选</span>
+          <button class="mini" id="pApplyGrid8" disabled>应用为8格配置</button>
+          <span id="pGrid8Info" class="hint"></span>
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="pSave" class="primary">保存项目</button>
+        <span id="pSaveHint" class="hint"></span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- 设备管理弹窗 -->
+<div id="devModal" class="modal" style="display:none">
+  <div class="modal-card">
+    <div class="modal-head">📷 设备管理 <span class="hint">X3 / X5 摄像头</span><button class="mini" id="devClose">✕</button></div>
+    <div id="devList" class="devlist"></div>
+    <div class="subsec">
+      <h3 id="devFormTitle">新增设备</h3>
+      <div class="row">
+        <label>名称</label><input id="dName" type="text" style="width:130px" placeholder="如 X5-实验室">
+        <label>型号</label><select id="dModel"><option>X5</option><option>X3</option></select>
+        <label>IP</label><input id="dIp" type="text" style="width:135px" placeholder="192.168.x.x">
+      </div>
+      <div class="row">
+        <label>SSH账号</label><input id="dUser" type="text" style="width:90px" value="root">
+        <label>SSH密码</label><input id="dPass" type="text" style="width:125px" placeholder="编辑留空=不变">
+        <label>token</label><input id="dToken" type="text" style="width:135px" placeholder="空=读camera.yaml">
+      </div>
+      <div class="row">
+        <button id="dSave" class="primary">保存设备</button>
+        <button id="dNew" class="mini">清空新增</button>
+        <span id="dHint" class="hint"></span>
+      </div>
+    </div>
+    <div class="subsec">
+      <h3>🔥 固件升级（当前激活设备）</h3>
+      <div class="hint" id="fwDevInfo" style="margin-bottom:8px"></div>
+      <div class="row">
+        <label>固件包</label><select id="fwSelect" style="flex:1"></select>
+        <button id="flashBtn" class="primary" style="background:linear-gradient(135deg,#f59e0b,#dc2626)">🔥 开始刷机</button>
+      </div>
+      <div class="hint" style="font-size:12px">设备经 8000 端口下载固件 → OTA 更新 → 自动重启。刷机中请勿断电/断网。固件包先放入 firmware/对应型号/ 目录。</div>
+    </div>
+  </div>
+</div>
+<footer>ReplayLab · AI 摄像头视频注入测试平台 · 数据目录 E:\TestTools · 报告归档 reports/</footer>
+<script src="/static/app.js"></script>
+<script src="/static/project.js"></script>
+</body>
+</html>

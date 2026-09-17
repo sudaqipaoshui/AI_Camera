@@ -1,0 +1,22 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: GET
+  path: /camera/deleteTester?testerId=17
+  params: {}
+  headers:
+    Content-Type: application/json
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: /changeResolution
+  input:
+  expectation:
+    response:
+      code: 10010
+      message: 当前项目不是长跑项目
+
+- case: /changeResolution
+  input:
+    path: /camera/deleteTester?testerId=19
+  expectation:
+    response:
+      code: 0

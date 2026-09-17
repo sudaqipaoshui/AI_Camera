@@ -1,0 +1,36 @@
+common_inputs:
+  # host: '{{$.host.camera}}'
+  method: POST
+  path: /camera/updateRtspSettings
+  params: {}
+  headers:
+    Content-Type: application/json
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: updateRtspSettings|camera起点
+  input:
+    host: '{{$.host.cameraA}}'
+    json:
+      IsRtsp: true
+      host: '{{$.host.replay3}}'
+      rtsp_camera_type: 4
+      startTime: '20251111t132000z'
+      endTime: '20251111t133600z'
+      play_channel: 4
+  expectation:
+    response:
+      code: 0
+
+- case: updateRtspSettings|camera终点
+  input:
+    host: '{{$.host.cameraB}}'
+    json:
+      IsRtsp: true
+      host: '{{$.host.replay3}}'
+      rtsp_camera_type: 4
+      startTime: '20251111t132000z'
+      endTime: '20251111t133600z'
+      play_channel: 5
+  expectation:
+    response:
+      code: 0

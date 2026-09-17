@@ -1,0 +1,18 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /camera/changePlan
+  params: {}
+  headers:
+    Content-Type: application/json
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: /camera/changePlan
+  input:
+    json:
+      planId: -1                    # -1=清空计划，其他=切换到指定计划
+      zkHost: zk.example.com        # 切换时必填，ZooKeeper地址
+      planName: 测试计划            # 切换时必填，计划名称
+      serverTag: server001          # 切换时必填，服务器标签  expectation:
+    response:
+      code: 0

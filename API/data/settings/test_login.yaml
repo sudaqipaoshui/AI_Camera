@@ -1,0 +1,36 @@
+common_inputs:
+  host: '{{$.host.camera-prod}}'
+  method: POST
+  path: /camera/login
+  params: {}
+  headers:
+    Content-Type: application/json
+tests:
+# - case: /camera/login - normal
+#   input:
+#     json:
+#       username: '{{$.users[0].username}}'
+#       encodePassword: '{{$.users[0].encodePassword}}'
+#   expectation:
+#     response:
+#       code: 0
+
+# 说明: encodePassword 不再写死。下面的负向用例 = 正确哈希 + "=="(故意拼错),
+# 通过 {{$.users[0].encodePassword}} 从 config/test/camera.yaml 取真实值。
+- case: /camera/login - 密码错误
+  input:
+    json:
+      username: '{{$.users[0].username}}'
+      encodePassword: '{{$.users[0].encodePassword}}=='
+  expectation:
+    response:
+      code: 405
+
+- case: /camera/login - 账号错误
+  input:
+    json:
+      username: mqxx2014
+      encodePassword: '{{$.users[0].encodePassword}}=='
+  expectation:
+    response:
+      code: 405

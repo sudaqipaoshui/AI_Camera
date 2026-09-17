@@ -1,0 +1,18 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: GET
+  path: /control/getCodePackageInfo
+  # params: {}
+  # headers: {}
+tests:
+- case: /getCodePackageInfo
+  input:
+    params:
+      code: code=411857
+  expectation:
+    response:
+      name: ''
+      version: ''
+      downloadUrl: ''
+      md5: ''
+      code: 0

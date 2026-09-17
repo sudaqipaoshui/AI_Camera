@@ -1,0 +1,16 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /camera/extractFeature
+  params: {}
+  headers:
+    Content-Type: application/json
+tests:
+- case: /extractFeature
+  input:
+    json:
+      type: object
+      title: AAA
+      properties: 
+  expectation:
+    code: 0

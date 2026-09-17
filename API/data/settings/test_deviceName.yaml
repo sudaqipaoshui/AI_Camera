@@ -1,0 +1,16 @@
+common_inputs:
+  host: '{{$.host.cameraB}}'
+  method: POST
+  path: /camera/deviceName
+  params: {}
+  headers:
+    Content-Type: application/json
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: /camera/deviceName
+  input:
+    json:
+      deviceName: "TestName"
+  expectation:
+    response:
+      code: 0

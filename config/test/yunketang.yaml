@@ -1,0 +1,34 @@
+# 云课堂测试环境配置
+# 凭据以 ${VAR} 占位符引用, 真实值在项目根 .env (不入库), 参见 .env.example
+refresh_token: 1
+host:
+  yunketang-test: https://yunketang-api.dream-sports.cn
+url:
+  award_setting_random: /app/bs/award/setting/random
+users:
+- id: 1
+  account_id: 68765195
+  mobile: 131
+  verification_code: 589162
+  tokens: X==
+task_status:
+  undo: 1
+  done: 2
+  received: 6
+mysql:
+  uad_test:
+    host: 
+    port: 3306
+    user: 
+    password: ${UAD_MYSQL_PASSWORD}
+    database: lifestyle_test
+    autocommit: true
+    cursorclass: pymysql.cursors.DictCursor
+    charset: utf8
+dummy_cert: config/cert/dummy
+proxies:
+  http://10.20.1.128: http://10.10.1.10:5323
+secret:
+  10000: acbd18db4cc2f85cedef654fccc4a4d
+environment: test
+proxy: false

@@ -1,0 +1,13 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /control/sendLogFile
+  params: {}
+  headers: {}
+tests:
+- case: /sendLogFile
+  input:
+  expectation:
+    response:
+      # logLevel: 'w'
+      Code: 200

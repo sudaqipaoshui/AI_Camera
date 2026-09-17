@@ -1,0 +1,14 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: GET
+  path: /camera/syncCameraSysTime?time=1701248705
+  params: {}
+  headers:
+    Content-Type: application/json
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: /camera/syncCameraSysTime
+  input:
+  expectation:
+    response:
+      code: 0

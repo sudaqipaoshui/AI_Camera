@@ -1,0 +1,31 @@
+# 8点位1分钟跳绳·回放配置（黄金素材：双脚跳绳.mp4）
+# 素材：真实现场 8 点位同时跳绳，1280x720@30fps，60.4s
+# 画面 OSD：起点 2026-09-10 09:56:25，终点约 09:57:25，底部 8 路计数 + 总计
+# 成绩基准：Log/golden/双脚跳绳.json（125/138/102/115/127/153/139/138 -> 1726）
+#
+# 前提：
+# 1. 视频已上传 replay 服务器（host.replay = 192.168.3.63，按实际上传位置调整）
+# 2. 时间轴换算：OSD 为北京时间(UTC+8)；若 replay 服务器时间轴为 UTC，
+#    startTime/endTime 需改为减 8 小时（如 '20260910t015624z'），
+#    配置后若摄像头拉不到画面，优先排查时区
+common_inputs:
+  method: POST
+  path: /camera/updateRtspSettings
+  params: {}
+  headers:
+    Content-Type: application/json
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: updateRtspSettings|rope8黄金素材回放
+  input:
+    host: '{{$.host.camera}}'
+    json:
+      IsRtsp: true
+      host: '{{$.host.replay}}'
+      rtsp_camera_type: 4
+      startTime: '20260910t095624z'   # 视频起点（含发令前缓冲）
+      endTime: '20260910t095726z'     # 视频终点（成绩稳定后）
+      play_channel: 1
+  expectation:
+    response:
+      code: 0

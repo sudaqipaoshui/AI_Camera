@@ -1,0 +1,39 @@
+# 云体育测试环境配置
+# 凭据以 ${VAR} 占位符引用, 真实值在项目根 .env (不入库), 参见 .env.example
+refresh_token: 1
+host:
+  yuntiyu-test: https://yuntiyu-test.dream-sports.cn
+url:
+  award_setting_random: /app/bs/award/setting/random
+users:
+- id: 1
+  account_id: 68765195
+  mobile: 98762754698
+  verification_code: 589162
+  tokens:
+    '10001': ${YUNTIYU_API_TOKEN}
+task_status:
+  undo: 1
+  done: 2
+  received: 6
+mysql:
+  uad_test:
+    host: swc-rds-uad-master-test.dsint.com
+    port: 3306
+    user: uad_test_rw
+    password: ${UAD_MYSQL_PASSWORD}
+    database: lifestyle_test
+    autocommit: true
+    cursorclass: pymysql.cursors.DictCursor
+    charset: utf8
+dummy_cert: config/cert/dummy
+proxies:
+  http://10.20.1.128: http://10.10.1.10:5323
+secret:
+  10000: ${YUNTIYU_SECRET_10000}
+  10001: ${YUNTIYU_SECRET_10001}
+  10002: ${YUNTIYU_SECRET_10002}
+  80001: ${YUNTIYU_SECRET_80001}
+  100055: ${YUNTIYU_SECRET_100055}
+environment: test
+proxy: false

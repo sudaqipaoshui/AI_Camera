@@ -1,0 +1,14 @@
+common_inputs:
+  host: '{{$.host.cameraA}}'
+  method: GET
+  path: /camera/clearFaceData
+  params: {}
+  headers:
+    Content-Type: application/json
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: /camera/clearFaceData
+  input:
+  expectation:
+    response:
+      code: 0

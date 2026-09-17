@@ -1,0 +1,26 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /camera/changeModel
+  params: {}
+  headers:
+    Content-Type: application/json
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: /camera/changeModel
+  input:
+    json:
+      id: 17
+      exercise: 0  
+  expectation:
+    response:
+      code: 0
+
+- case: /camera/changeModel
+  input:
+    json:
+      id: 17
+      exercise: 1
+  expectation:
+    response:
+      code: 0

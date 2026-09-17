@@ -1,0 +1,19 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /camera/joinSport
+  params: {}
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+tests:
+- case: /camera/joinSport
+  input:
+    json:
+      data:
+        testers:
+        - testerId: 0
+          name: ''
+        itemId: 15
+  expectation:
+    response:
+      code: 0

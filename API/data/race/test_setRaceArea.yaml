@@ -1,0 +1,19 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /camera/setRaceArea
+  params: {}
+  headers:
+    Content-Type: application/json
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: /camera/setRaceArea
+  input:
+    json:
+      config:                     # 可选，配置信息（自动添加本机IP）
+        custom_field: value
+      itemGroup: 1                # 可选，项目分组
+      parentDeviceInfo: parent_device_id  # 可选，父设备ID
+  expectation:
+    response:
+      code: 0

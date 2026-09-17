@@ -1,0 +1,13 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: GET
+  path: /camera/startItem
+  params: {}
+  headers: {}
+tests:
+- case: /startItem
+  input:
+  expectation:
+    response:
+      code: 0
+      message: ''

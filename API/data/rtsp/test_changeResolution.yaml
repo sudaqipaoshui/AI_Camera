@@ -1,0 +1,44 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /camera/changeResolution
+  params: {}
+  headers:
+    Content-Type: application/json
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: /changeResolution
+  input:
+    json:
+      layer: 4  #  // 0=3840x2160, 4=1920x1080, 5=1280x720, 9=640x360
+  expectation:
+    response:
+      code: 0
+      layer: 4
+
+- case: /changeResolution
+  input:
+    json:
+      layer: 0
+  expectation:
+    response:
+      code: 0
+      layer: 0
+
+- case: /changeResolution
+  input:
+    json:
+      layer: 5
+  expectation:
+    response:
+      code: 0
+      layer: 5
+
+- case: /changeResolution
+  input:
+    json:
+      layer: 9
+  expectation:
+    response:
+      code: 0
+      layer: 9

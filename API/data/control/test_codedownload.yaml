@@ -1,0 +1,17 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /control/codeDownload
+  params: {}
+  headers:
+    Content-Type: application/json
+tests:
+- case: /codeDownload
+  input:
+    json:
+      md5: ''
+      downloadUrl: ''
+  expectation:
+    response:
+      message: 'download success'
+      code: 200

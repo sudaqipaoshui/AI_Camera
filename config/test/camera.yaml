@@ -1,0 +1,54 @@
+# ============================================================
+# 摄像头测试环境配置
+#
+# 凭据一律以 ${VAR} 占位符引用, 真实值放在项目根 .env (不入库)。
+# 新增变量请同步更新 .env.example。
+# 取值统一走 envloader, 例: from envloader import require
+# ============================================================
+
+refresh_token: 1
+
+host:
+  yuntiyu-test: https://yuntiyu-test.dream-sports.cn
+  camera-prod: http://192.168.1.245
+  camera: http://192.168.2.30
+  cameraA: http://192.168.3.29
+  cameraB: http://192.168.3.30
+  camera175: http://192.168.3.175
+  replay: 192.168.2.123
+  replay3: 192.168.3.63
+  replay200: 192.168.3.200
+  replay178: 192.168.3.178
+  replay175: 192.168.3.176
+
+url:
+  host: https://yuntiyu-test.dream-sports.cn/
+
+users:
+- id: 1
+  username: ${YUNTIYU_ACCOUNT_USERNAME}
+  password: ${YUNTIYU_ACCOUNT_PASSWORD}
+  encodePassword: ${YUNTIYU_ACCOUNT_ENCODE_PASSWORD}
+  x_token: ${YUNTIYU_X_TOKEN}
+
+licence: ${CAMERA_LICENCE}
+
+# ---------- X5 稳定性测试 SSH (当前主用 192.168.2.30) ----------
+ssh_host: 192.168.2.30
+ssh_username: root
+ssh_password: ${CAMERA_SSH_PASSWORD}
+ssh_port: 22
+ssh_timeout: 30
+
+# ---------- X3 备用机 (需要时取消注释并切换) ----------
+# ssh_host: 192.168.1.245
+# ssh_username: root
+# ssh_password: ${X3_SSH_PASSWORD}
+# ssh_port: 22
+# ssh_timeout: 30
+
+environment: test
+proxy: false
+
+# 说明: rootdir / config_path 由 pytest_helper/plugin.py 的 env fixture 在运行时
+# 按实际路径注入, 写在配置里也会被覆盖, 因此不再保留 (原值是无效的 mac 路径)。

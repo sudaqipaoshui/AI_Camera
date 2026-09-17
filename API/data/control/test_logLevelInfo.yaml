@@ -1,0 +1,13 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: GET
+  path: /control/logLevelInfo
+  params: {}
+  headers: {}
+tests:
+- case: /logLevelInfo
+  input:
+  expectation:
+    response:
+      logLevel: 'w'
+      Code: 200

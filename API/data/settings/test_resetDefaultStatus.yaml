@@ -1,0 +1,21 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: GET
+  params: {}
+  headers:
+    Content-Type: application/json
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: /changeReso/resetDefaultStatus?force=0
+  input:
+    path: /camera/resetDefaultStatus??force=0
+  expectation:
+    response:
+      code: 0
+
+- case: /changeReso/resetDefaultStatus?force=1
+  input:
+    path: /camera/resetDefaultStatus??force=1
+  expectation:
+    response:
+      code: 0

@@ -1,0 +1,32 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /camera/changeItemConfig
+  params: {}
+  headers:
+    Content-Type: application/json
+    x_token: '{{$.users[?(@.id==1)].x_token}}'
+tests:
+- case: /camera/changeItemConfig
+  input:
+    json:
+      id: 17
+      # isFoulJudge: 1
+      # enableAdvanceRun: 1
+      # runType: 1
+      # level: 2
+      # recType: 1
+      # checkValidMove: 1
+      # specialModel: "model_v2"
+      # autoJoin: 1
+      # useFaceRec: 1
+      # enableCheckBall: 1
+      # cameraFront: 1
+      # isOutOfBoundsJudge: 1
+      # backHandJudge: 1
+      # legFoulJudge: 1
+      # withHelpJudge: 1
+      # enableStepJump: 1
+  expectation:
+    response:
+      code: 0

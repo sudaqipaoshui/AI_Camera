@@ -1,0 +1,96 @@
+# ============================================
+# AICameraTestLab .gitignore
+# 原则: 凭据、报告产物、二进制、临时工作区 一律不入库
+# ============================================
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ---------- IDE / OS ----------
+.idea/
+*.iml
+.vscode/
+*.DS_Store
+.recycle
+
+# ---------- 损坏的 git 现场 (2026-09-17 .git 对象库损坏, 留档备查后应删除) ----------
+# ⚠️ 这个目录里是一个损坏的 .git 仓库残留, 绝不能被新仓库追踪
+.git_broken_*/
+.git_broken_*/**
+*.git_broken_*
+
+# ---------- 凭据 (最高优先级, 绝不入库) ----------
+.env
+.env.*
+*.env
+*.env.*
+# 模板文件必须入库, 让新同学知道要配哪些变量
+!.env.example
+# 私钥一律不入库
+config/id_rsa*
+config/**/*.pem
+*.pem
+*.key
+*.p12
+credentials*.json
+
+# ---------- 测试报告 / 产物 ----------
+allure-report/
+allure-results/
+allure-html/
+report/
+test_result.log
+*.report.json
+*.xmind
+*xmind*
+
+# ReplayLab 采集数据与临时产物
+ReplayLab/reports/*.jsonl
+ReplayLab/reports/_frames/
+ReplayLab/reports/*.png
+ReplayLab/items.json.bak
+ReplayLab/_item_tmp.json
+# 跑前设备配置快照 / 注入参数临时文件
+ReplayLab/_state/
+ReplayLab/_rtsp_tmp.json
+
+# ---------- 二进制 / 媒体 ----------
+*.png
+*.jpg
+*.jpeg
+*.mp4
+*.zip
+
+# ---------- 日志 ----------
+*.log
+
+# ---------- 临时工作区 ----------
+/.temp/
+/temp/
+/work/
+# Log/ 只保留分析工具与 golden 基准(Log/golden/), 临时产物全部忽略
+# 注意: tmp_* 会包含设备 item.json 转储, 里面带 device token 与 license, 必须排除
+Log/tmp_*
+Log/diag_*.py
+Log/_*.py
+# 勘察/调试用的临时目录 (例如从设备拉回的配置转储)
+Log/_*/
+
+# ---------- 本地工具状态 ----------
+.workbuddy/
+
+# ---------- 数据库 ----------
+# SQL/ 下的建库/建表/造数脚本要入库(可复现), 但导出的数据转储不入库
+SQL/*.dump
+SQL/*.sql.gz
+SQL/*_data_*.sql
+
+# ---------- 版本标记 ----------
+.version
+
+# 注意: 不要忽略 *.txt —— 会误伤 requirements.txt

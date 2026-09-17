@@ -1,0 +1,17 @@
+common_inputs:
+  host: '{{$.host.camera}}'
+  method: POST
+  path: /uploads
+  params: {}
+  headers:
+    Content-Type: multipart/form-data
+tests:
+- case: /uploads
+  input:
+    data:
+      file: deploy.tar.gz
+  expectation:
+    response:
+      Messages: ''
+      Code: 0
+      md5: ''

@@ -1,0 +1,14 @@
+common_inputs:
+  method: GET
+  path: /control/reboot
+  params: {}
+  headers:
+    Content-Type: application/json
+tests:
+- case: reboot起点
+  input:
+    host: '{{$.host.cameraA}}'
+  expectation:
+    response:
+      code: 200
+      message: 'successful'
