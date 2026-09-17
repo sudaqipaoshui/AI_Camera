@@ -63,6 +63,22 @@ def split_statements(sql_text: str) -> list[str]:
     return [s.strip() for s in cleaned.split(";") if s.strip()]
 
 
+def ensure_column(conn, table: str, column: str, ddl: str) -> bool:
+    """幂等加列: 用 SHOW COLUMNS 判断, 缺列才执行 ddl。返回是否真正加了列。
+
+    用途: 结果表(schema_runs.sql)后续演进时, 老库已建表但缺新列, 靠它补列而非 DROP 重建。
+    """
+    with conn.cursor() as cur:
+        cur.execute(f"SHOW COLUMNS FROM `{table}`")
+        cols = {row[0] for row in cur.fetchall()}
+    if column in cols:
+        return False
+    with conn.cursor() as cur:
+        cur.execute(ddl)
+    conn.commit()
+    return True
+
+
 def exec_script(conn, path: Path, replacements: dict[str, str] | None = None) -> None:
     """执行一个 .sql 文件, 打印每条语句的结果。"""
     text = path.read_text(encoding="utf-8")
@@ -143,6 +159,18 @@ def main() -> int:
             print(f"已连接 MySQL {cur.fetchone()[0]}  ({DB_HOST}:{DB_PORT})")
         for name in SQL_FILES:
             exec_script(conn, SQL_DIR / name, {"__AICAM_PASSWORD__": app_pwd})
+
+        # 结果表幂等演进: 老库若 case_result 缺 failure_class 列, 补上(不 DROP)
+        if ensure_column(
+            conn, "case_result", "failure_class",
+            "ALTER TABLE `case_result` "
+            "ADD COLUMN `failure_class` VARCHAR(16) NULL "
+            "COMMENT '失败归因: env/case/product/unknown' AFTER `status`, "
+            "ADD KEY `idx_failure_class` (`failure_class`)",
+        ):
+            print("  已为 case_result 补充 failure_class 列")
+        else:
+            print("  case_result.failure_class 列已存在, 跳过")
     finally:
         conn.close()
 

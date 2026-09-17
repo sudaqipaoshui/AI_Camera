@@ -101,8 +101,15 @@ def api_run_detail(run_id):
         cases = recorder.fetch_cases(run_id, status=status,
                                      limit=_limited(request.args.get("limit", 300), 300, 2000))
         metrics = recorder.fetch_metrics(run_ids=[run_id])
+        # 失败类别汇总(给前端展示"环境/用例/产品"三个数字)
+        from collections import Counter
+        cls_counter = Counter(
+            (c.get("failure_class") or "unknown")
+            for c in cases if (c.get("status") or "") in ("failed", "error")
+        )
         return jsonify({"ok": True, "run": _rows(runs)[0],
-                        "cases": _rows(cases), "metrics": _rows(metrics)})
+                        "cases": _rows(cases), "metrics": _rows(metrics),
+                        "failure_classes": dict(cls_counter)})
     except Exception as exc:
         return jsonify(_fail(exc))
 
@@ -129,6 +136,7 @@ def api_trend():
             {"run_id": rid, "value": float(val)} for rid, val in vals]
             for (name, subject), vals in data["metric_series"].items()}
         return jsonify({"ok": True, "targets": out_targets, "metrics": series,
+                        "failure_classes": data.get("failure_classes", {}),
                         "total_runs": len(data["runs"])})
     except Exception as exc:
         return jsonify(_fail(exc))

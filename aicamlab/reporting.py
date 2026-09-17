@@ -63,8 +63,21 @@ def collect(limit: int = 60) -> dict:
             (m["run_id"], float(m["value"]))) 
     for v in metric_series.values():
         v.sort(key=lambda t: str(run_index.get(t[0], {}).get("started_at") or ""))
+
+    # 失败类别分布: 每个 run_id -> {env: n, case: n, product: n, unknown: n}
+    failure_classes: dict[str, dict[str, int]] = {}
+    for rid in run_ids:
+        cases = recorder.fetch_cases(rid, limit=10000)
+        tally: dict[str, int] = {}
+        for c in cases:
+            if (c.get("status") or "") in ("failed", "error"):
+                cls = c.get("failure_class") or "unknown"
+                tally[cls] = tally.get(cls, 0) + 1
+        if tally:
+            failure_classes[rid] = tally
+
     return {"runs": runs, "by_target": by_target, "metric_series": metric_series,
-            "run_index": run_index}
+            "run_index": run_index, "failure_classes": failure_classes}
 
 
 # --------------------------------------------------------------------------
@@ -119,6 +132,22 @@ def to_markdown(data: dict) -> str:
                              f"{_pct(r.get('passed'), r.get('total'))} | {r.get('failed')} "
                              f"| {r.get('duration_sec')} | {r.get('verdict')} |")
             lines.append("")
+
+    # 失败类别分布
+    if data.get("failure_classes"):
+        _CLS_LABEL = {"env": "环境", "case": "用例", "product": "产品", "unknown": "未归类"}
+        lines += ["## 失败类别分布", "",
+                  "_env=环境/基础设施 · case=用例自身 · product=产品缺陷 · unknown=未归类。_",
+                  "_门禁只阻塞 product。_", "",
+                  "| 批次 | 环境 | 用例 | 产品 | 未归类 |",
+                  "|---|---|---|---|---|"]
+        for r in runs[:25]:
+            rid = r.get("run_id")
+            tally = data["failure_classes"].get(rid, {})
+            lines.append(
+                f"| {rid} | {tally.get('env', 0)} | {tally.get('case', 0)} "
+                f"| {tally.get('product', 0)} | {tally.get('unknown', 0)} |")
+        lines.append("")
 
     # 指标趋势
     if data["metric_series"]:
@@ -229,6 +258,22 @@ def to_html(data: dict) -> str:
                     f"<td class='num'>{r.get('duration_sec')}</td>"
                     f"<td>{esc(str(r.get('verdict')))}</td></tr>")
             out.append("</table>")
+
+    if data.get("failure_classes"):
+        out.append("<h2>失败类别分布</h2>")
+        out.append("<div class='meta'>env=环境 · case=用例 · product=产品缺陷 · "
+                   "unknown=未归类。门禁只阻塞 <b>product</b>。</div>")
+        out.append("<table><tr><th>批次</th><th>环境</th><th>用例</th>"
+                   "<th>产品</th><th>未归类</th></tr>")
+        for r in runs[:25]:
+            tally = data["failure_classes"].get(r.get("run_id"), {})
+            out.append(
+                f"<tr><td>{esc(str(r.get('run_id')))}</td>"
+                f"<td class='num'>{tally.get('env', 0)}</td>"
+                f"<td class='num'>{tally.get('case', 0)}</td>"
+                f"<td class='num'>{tally.get('product', 0)}</td>"
+                f"<td class='num'>{tally.get('unknown', 0)}</td></tr>")
+        out.append("</table>")
 
     if data["metric_series"]:
         out.append("<h2>指标趋势</h2><table><tr><th>指标</th><th>最新</th>"

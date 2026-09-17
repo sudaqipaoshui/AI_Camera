@@ -118,19 +118,50 @@ def evaluate(tag: str | None = None, log: bool = True) -> tuple[dict, int, str]:
         failed = int(run.get("failed") or 0) + int(run.get("error") or 0)
         skipped = int(run.get("skipped") or 0)
 
-        if th.get("max_failed") is not None:
-            limit = int(th["max_failed"])
-            findings.append(Finding(target, "失败用例数", "block", failed <= limit,
-                                    f"{failed} 失败/错误(上限 {limit})", failed, limit))
         if th.get("max_skipped_pct") is not None and total:
             pct = skipped / total * 100
             limit = float(th["max_skipped_pct"])
             findings.append(Finding(target, "跳过占比", "block", pct <= limit,
                                     f"{pct:.1f}%（{skipped}/{total},上限 {limit:.0f}%）",
                                     round(pct, 1), limit))
+
+        # ---- 按失败类别判定(只阻塞 block_classes 里的类别) ----
+        # 这是"只阻塞产品缺陷"口径的落地: env/case 类失败只 warn, 不卡流水线。
+        if failed:
+            from aicamlab.failure import CLASS_ENV, CLASS_CASE, CLASS_PRODUCT, CLASS_UNKNOWN
+            cases = recorder.fetch_cases(run["run_id"], limit=10000)
+            block_classes = set(th.get("block_classes") or [CLASS_PRODUCT])
+            from aicamlab.failure import classify
+            cls_counts: dict[str, int] = {}
+            for c in cases:
+                if (c.get("status") or "") in ("failed", "error"):
+                    cls = c.get("failure_class") or classify(c.get("message"), c.get("nodeid", ""))
+                    cls_counts[cls] = cls_counts.get(cls, 0) + 1
+            # 每个类别各出一条 finding
+            all_classes = (CLASS_ENV, CLASS_CASE, CLASS_PRODUCT, CLASS_UNKNOWN)
+            for cls in all_classes:
+                n = cls_counts.get(cls, 0)
+                if n == 0:
+                    continue
+                is_blocked = cls in block_classes
+                sev = "block" if is_blocked else "warn"
+                label = {"env": "环境类失败", "case": "用例类失败",
+                         "product": "产品缺陷", "unknown": "未归类失败"}[cls]
+                findings.append(Finding(
+                    target, label, sev, n == 0 or not is_blocked,
+                    f"{n} 条{label}" + ("" if is_blocked else "（仅提示，不阻塞）"),
+                    n, "0" if is_blocked else "不设限"))
+
+        # 硬闸: 若配置里显式设了 max_failed(总失败数上限), 仍作为 block 项
+        if th.get("max_failed") is not None:
+            limit = int(th["max_failed"])
+            findings.append(Finding(target, "失败用例数", "block", failed <= limit,
+                                    f"{failed} 失败/错误(上限 {limit})", failed, limit))
+
         if run.get("verdict") != "PASS":
-            # 批次本身已判失败, 不必再等用例数阈值
-            findings.append(Finding(target, "批次结论", "block", False,
+            # 批次本身已判失败。⚠️ 若失败全是 env/case 类, 不应因"结论 FAIL"就直接 block。
+            # 这里改为 warn, 真正的 block 交给上面的分类判定。
+            findings.append(Finding(target, "批次结论", "warn", False,
                                     f"批次 {run['run_id']} 结论为 {run.get('verdict')}",
                                     run.get("verdict"), "PASS"))
 

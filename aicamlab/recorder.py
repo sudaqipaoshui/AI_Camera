@@ -175,13 +175,19 @@ def record_summary(summary: dict, log_path: str | None = None,
             client.execute("DELETE FROM `case_result` WHERE `run_id` = %s", (run_id,))
             cases = summary.get("cases") or []
             if cases:
+                from aicamlab.failure import classify
+                rows = []
+                for c in cases:
+                    status = c.get("status", "")
+                    msg = scrub(c.get("message") or "")[:60000]
+                    cls = classify(msg, c.get("nodeid", "")) if status in ("failed", "error") else None
+                    rows.append((run_id, c.get("nodeid", ""), (c.get("name") or "")[:255],
+                                 (c.get("module") or "")[:128], status, cls,
+                                 float(c.get("duration_sec") or 0), msg))
                 client.executemany(
                     "INSERT INTO `case_result` (run_id, nodeid, name, module, status, "
-                    "duration_sec, message) VALUES (%s,%s,%s,%s,%s,%s,%s)",
-                    [(run_id, c.get("nodeid", ""), (c.get("name") or "")[:255],
-                      (c.get("module") or "")[:128], c.get("status", ""),
-                      float(c.get("duration_sec") or 0), scrub(c.get("message") or "")[:60000])
-                     for c in cases],
+                    "failure_class, duration_sec, message) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                    rows,
                 )
         print(f"[recorder] 已落库: {run_id} ({run_row['verdict']}, "
               f"{run_row['total']} 用例, {run_row['duration_sec']}s)")
@@ -277,7 +283,7 @@ def fetch_cases(run_id: str, status: str | None = None,
         client.connect()
         if missing_tables(client):
             return []
-        sql = ("SELECT nodeid, name, module, status, duration_sec, message "
+        sql = ("SELECT nodeid, name, module, status, failure_class, duration_sec, message "
                "FROM `case_result` WHERE `run_id` = %s")
         params: list = [run_id]
         if status:

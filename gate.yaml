@@ -12,21 +12,17 @@ version: 1
 
 # 所有目标共用的默认门槛, 可被 targets 下的同名项覆盖
 defaults:
-  max_failed: 0            # 允许的失败用例数(含 error)
   max_skipped_pct: 20      # 跳过占比上限(%), 跳太多通常意味着环境不对
   max_age_hours: 336       # 批次最大年龄(14 天), 超期视为"没有有效数据"
+  # 只对这些失败类别做 block 判定, 其余类别只 warn(不卡流水线)。
+  # 类别口径见 aicamlab/failure.py: env(环境) / case(用例自身) / product(产品缺陷) / unknown
+  block_classes:
+    - product              # 只阻塞产品缺陷(团队 QA 拍板口径)
 
 # 按目标覆盖
 targets:
-  api:
-    max_failed: 0
-  security:
-    max_failed: 0
   e2e:
-    max_failed: 0
     max_skipped_pct: 40    # E2E 依赖真机, 允许更多跳过
-  replay:
-    max_failed: 0
 
 # 必须存在的批次 —— 缺了说明"证据不足", 直接不放行
 # 只放离线可跑的目标, 避免门禁因为没借到设备而永远红着

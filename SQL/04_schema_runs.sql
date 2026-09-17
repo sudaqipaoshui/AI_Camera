@@ -61,13 +61,15 @@ CREATE TABLE IF NOT EXISTS `case_result` (
   `name`          VARCHAR(255) NULL,
   `module`        VARCHAR(128) NULL,
   `status`        VARCHAR(16)  NOT NULL COMMENT 'passed/failed/skipped/error',
+  `failure_class` VARCHAR(16)  NULL COMMENT '失败归因: env/case/product/unknown (见 aicamlab/failure.py)',
   `duration_sec`  DECIMAL(10,3) NOT NULL DEFAULT 0,
   `message`       TEXT NULL COMMENT '失败/跳过原因(已截断)',
   `created_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_run_node` (`run_id`, `nodeid`),
   KEY `idx_run` (`run_id`),
-  KEY `idx_status` (`status`)
+  KEY `idx_status` (`status`),
+  KEY `idx_failure_class` (`failure_class`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用例级结果';
 
 -- ------------------------------------------------------------
