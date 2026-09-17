@@ -10,11 +10,15 @@ refresh_token: 1
 
 host:
   yuntiyu-test: https://yuntiyu-test.dream-sports.cn
-  camera-prod: http://192.168.1.245
   # camera 由 config/devices.yaml 的 active 设备在运行时注入(覆盖此处的值),
   # 70 个数据文件用 {{$.host.camera}} 决定"测哪台设备"。
   # 这里保留一个占位值只为让配置自解释; 真正生效的是清单里的 IP。
   camera: http://192.168.2.60
+  # cameraA / cameraB / camera175 是「双路 RTSP 测试」的起点/终点相机语义键,
+  # 被 E2E 双机用例合法引用(test_updateRtspSettings_* 的 camera起点/camera终点)。
+  # ⚠️ 下面的 IP 是历史遗留(192.168.3.x 网段的设备早已离线), 仅作占位;
+  #    真实双机环境需在 devices.yaml 里补对应的起点/终点设备后, 再让这组键
+  #    由清单注入(目前尚未实现, 双路用例跑起来仍会连到离线 IP)。
   cameraA: http://192.168.3.29
   cameraB: http://192.168.3.30
   camera175: http://192.168.3.175

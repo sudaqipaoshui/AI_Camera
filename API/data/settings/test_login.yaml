@@ -1,5 +1,5 @@
 common_inputs:
-  host: '{{$.host.camera-prod}}'
+  host: '{{$.host.camera}}'
   method: POST
   path: /camera/login
   params: {}

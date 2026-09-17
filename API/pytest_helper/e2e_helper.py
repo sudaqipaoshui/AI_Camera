@@ -46,6 +46,22 @@ def resolve_ssh_password(env=None) -> str:
     return envloader.require("CAMERA_SSH_PASSWORD")
 
 
+def _host_from_env(env: dict) -> str:
+    """从 env['host']['camera'] 提取裸 IP(去掉 http(s):// 协议头)。
+
+    inventory 注入的 host.camera 形如 "http://192.168.2.60"。SSH 只需要 IP。
+    取不到返回空串, 由调用方决定是否报错(不再兜底硬编码 IP)。
+    """
+    hosts = env.get("host") if env else None
+    if isinstance(hosts, dict):
+        url = hosts.get("camera") or ""
+        for scheme in ("https://", "http://"):
+            if url.startswith(scheme):
+                return url[len(scheme):].rstrip("/")
+        return url
+    return ""
+
+
 class E2ETimeHelper:
     """时间处理工具类 - 处理时间解析、计算等"""
     
@@ -342,19 +358,22 @@ class E2ELogManager:
             操作结果字典
         """
         # 从配置获取SSH信息
+        # SSH 目标 = active 设备(env['ssh_host'] 已由 inventory 注入),
+        # 不再兜底到硬编码的 192.168.3.29(早已离线的历史设备)。
         try:
             if env:
                 if remote_host is None:
-                    cameraB_url = env.get('host', {}).get('cameraB', 'http://192.168.3.29')
-                    remote_host = cameraB_url.replace('http://', '').replace('https://', '')
+                    remote_host = env.get('ssh_host') or _host_from_env(env)
                 remote_username = env.get('ssh_username', 'root')
                 remote_password = resolve_ssh_password(env)
             else:
                 raise AttributeError("env not provided")
         except (AttributeError, KeyError, TypeError):
-            remote_host = remote_host or "192.168.3.29"
             remote_username = "root"
             remote_password = resolve_ssh_password(None)
+            if not remote_host:
+                raise AttributeError(
+                    "无法确定 SSH 目标设备: env 缺 ssh_host 且未显式传 remote_host")
         
         with allure.step(f"清空SSH设备日志: {remote_host}:{remote_log_path}"):
             print("="*60)
@@ -550,19 +569,22 @@ class E2ELogManager:
             (日志文件路径, 操作结果字典)
         """
         # 从配置获取SSH信息
+        # SSH 目标 = active 设备(env['ssh_host'] 已由 inventory 注入),
+        # 不再兜底到硬编码的 192.168.3.29(早已离线的历史设备)。
         try:
             if env:
                 if remote_host is None:
-                    cameraB_url = env.get('host', {}).get('cameraB', 'http://192.168.3.29')
-                    remote_host = cameraB_url.replace('http://', '').replace('https://', '')
+                    remote_host = env.get('ssh_host') or _host_from_env(env)
                 remote_username = env.get('ssh_username', 'root')
                 remote_password = resolve_ssh_password(env)
             else:
                 raise AttributeError("env not provided")
         except (AttributeError, KeyError, TypeError):
-            remote_host = remote_host or "192.168.3.29"
             remote_username = "root"
             remote_password = resolve_ssh_password(None)
+            if not remote_host:
+                raise AttributeError(
+                    "无法确定 SSH 目标设备: env 缺 ssh_host 且未显式传 remote_host")
         
         date_str = datetime.datetime.now().strftime("%Y%m%d")
         camera_dir = project_root / "Log" / date_str / "camera"
