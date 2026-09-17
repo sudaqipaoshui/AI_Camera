@@ -1,0 +1,87 @@
+# ============================================================
+# AICameraTestLab CI
+#
+# 分层设计(对应"真机依赖"这个硬约束):
+#   - unit-test : 纯函数回归测试, 跑在 GitHub 云 runner(ubuntu), 不需要设备/凭据。
+#   - api-test  : 接口用例, 跑在内网 self-hosted runner(能访问 192.168.2.60 的机器),
+#                 凭据通过 GitHub Secrets 注入, 不落盘、不入库。
+#
+# 前置准备(见 docs/CI.md):
+#   1) 仓库 Settings -> Secrets 里配置 CAMERA_SSH_PASSWORD / YUNTIYU_* 等。
+#   2) 内网机器注册 self-hosted runner, 打标签 aicamlab。
+# ============================================================
+
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:          # 允许手动触发
+
+jobs:
+  # ---------- 纯函数回归: 云 runner, 无凭据 ----------
+  unit-test:
+    name: 纯函数回归 (无设备)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          # 只装回归测试真正需要的依赖, 不装 airtest/pocoui(依赖 adb, 云上无用)
+          pip install pytest pytest-html pytest-metadata PyYAML jsonpath jsonpath-ng \
+                      requests pymysql pycryptodome pyDes unpaddedbase64
+
+      - name: 运行纯函数回归
+        run: |
+          python -m pytest API/tests/helper/ -v \
+            -p no:cacheprovider \
+            --tb=short
+
+  # ---------- 接口用例: 内网 self-hosted runner, 需真机 + 凭据 ----------
+  api-test:
+    name: 接口用例 (真机 .60)
+    runs-on: [self-hosted, linux, aicamlab]
+    # 只有内网 runner 可用时才跑; 无 runner 时此 job 会一直 pending, 属预期。
+    timeout-minutes: 30
+    env:
+      # 凭据从 GitHub Secrets 注入环境变量(envloader 优先读环境变量, 不落盘)。
+      CAMERA_SSH_PASSWORD: ${{ secrets.CAMERA_SSH_PASSWORD }}
+      YUNTIYU_ACCOUNT_USERNAME: ${{ secrets.YUNTIYU_ACCOUNT_USERNAME }}
+      YUNTIYU_ACCOUNT_PASSWORD: ${{ secrets.YUNTIYU_ACCOUNT_PASSWORD }}
+      YUNTIYU_ACCOUNT_ENCODE_PASSWORD: ${{ secrets.YUNTIYU_ACCOUNT_ENCODE_PASSWORD }}
+      YUNTIYU_X_TOKEN: ${{ secrets.YUNTIYU_X_TOKEN }}
+      CAMERA_LICENCE: ${{ secrets.CAMERA_LICENCE }}
+      # CI 结果以 pytest 退出码为准, 不写本地结果库(避免 CI 环境配 MySQL)。
+      # 如需入库, 删掉下面 run 命令里的 --no-record 并配 LOCAL_MYSQL_* 环境变量。
+      AICAM_TRIGGER_BY: "ci-github"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 运行接口用例
+        run: |
+          python run.py api --no-record --json
+
+      - name: 上传 allure 结果
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-api
+          path: allure-report/allure-results/
+          retention-days: 7
