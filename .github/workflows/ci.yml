@@ -41,7 +41,12 @@ jobs:
 
       - name: 运行纯函数回归
         run: |
+          # -o addopts="" 清空 pytest.ini 继承的 --alluredir/--env/--config:
+          # 纯函数回归不需要 allure 报告、设备配置、云平台凭据。
+          # (根 conftest 的 pytest_helper.plugin 已对 allure/curlify 做可选导入,
+          #  且 render_inputs/render_expectation 已惰性化, 不碰 env)
           python -m pytest API/tests/helper/ -v \
+            -o addopts="" \
             -p no:cacheprovider \
             --tb=short
 

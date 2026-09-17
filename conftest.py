@@ -14,10 +14,23 @@ if str(API_DIR) not in sys.path:
     sys.path.insert(0, str(API_DIR))
 
 # Auto-load custom plugin providing fixtures and parametrization
+# 注意: e2e_helper 依赖 airtest/pocoui 等真机库, 不能在纯函数/接口测试时无条件加载
+# (否则 CI 云 runner 没装这些库会在收集阶段直接 import 失败)。
+# 它只在收集路径含 E2E 时由下面的 pytest_configure 钩子动态注册。
 pytest_plugins = [
     "pytest_helper.plugin",
-    "pytest_helper.e2e_helper",  # E2E测试辅助插件
 ]
+
+
+def pytest_configure(config):
+    """E2E 场景才加载 e2e_helper 插件(真机库依赖), 其余场景不加载。"""
+    import os
+
+    # 判定是否在跑 E2E: 命令行 args 里出现 E2E 路径, 或显式环境变量。
+    args = list(getattr(config, "args", []) or [])
+    is_e2e = os.environ.get("AICAM_E2E") == "1" or any("E2E" in a for a in args)
+    if is_e2e:
+        config.pluginmanager.import_plugin("pytest_helper.e2e_helper")
 
 # mysql fixture: 项目内访问测试库的唯一入口 (实现见 API/pytest_helper/db.py)
 #

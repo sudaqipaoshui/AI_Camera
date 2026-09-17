@@ -10,6 +10,11 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+# 本地虚拟环境 (含临时用于模拟 CI 的 .ci_sim_venv 等)
+.venv/
+venv/
+*.venv/
+.ci_sim_venv/
 
 # ---------- IDE / OS ----------
 .idea/

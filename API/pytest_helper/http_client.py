@@ -11,13 +11,50 @@ import logging
 import os
 from json import JSONDecodeError
 
-import allure
-import curlify
 import requests
 
 from pytest_helper.common import render, DateEncoder
 from pytest_helper.encryption import rsa, sha3256, des3_encrypt, get_encryption2
 from pytest_helper.errors import NonJsonResponse
+
+# allure / curlify 都是"尽力而为"的调试/报告增强能力:
+#   - allure  用于报告装饰与附件
+#   - curlify 用于把请求转成 curl 命令打进日志
+# CI 云 runner 的纯函数回归不装 allure-pytest / curlify, 缺失时用 no-op stub 顶替,
+# 不能让它们拖累 import(否则整个插件在收集阶段就崩)。
+class _NoopAttachmentType:
+    TEXT = "text"
+    JSON = "json"
+    XML = "xml"
+    HTML = "html"
+
+
+class _NoopAllure:
+    attachment_type = _NoopAttachmentType()
+
+    def step(self, *_a, **_k):
+        class _Ctx:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        return _Ctx()
+
+    def attach(self, *_a, **_k):
+        pass
+
+
+try:
+    import allure
+except ImportError:  # pragma: no cover
+    allure = _NoopAllure()
+
+try:
+    import curlify
+except ImportError:  # pragma: no cover
+    curlify = None
 # from pytest_helper.signature import moatkeeper_signature, uds_sig, vbom_sign, do_admin_sign, bd_sign
 import copy
 from urllib.parse import urlparse
@@ -164,6 +201,8 @@ def check_form_upload(env, inputs):
 
 
 def curl_print(req: requests.request, inputs):
+    if curlify is None:  # CI 等无 curlify 环境直接跳过, 不影响请求逻辑
+        return
     try:
         curl_str = curlify.to_curl(req)
 

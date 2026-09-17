@@ -4,10 +4,16 @@ import json
 import os
 import sys
 import time
-import allure
 import pytest
 import yaml
 import logging
+
+# allure 仅用于报告装饰/附加, 属"尽力而为"能力。CI 云 runner 的纯函数回归不装 allure-pytest,
+# 因此这里做成可选导入: 缺失时置 None, 下方使用处已有 try/except 兜底。
+try:
+    import allure
+except ImportError:  # pragma: no cover - 仅在不装 allure 的环境触发
+    allure = None
 from pathlib import Path
 from hashlib import md5
 
@@ -158,11 +164,12 @@ def pytest_assertrepr_compare(config, op, left, right):
     logging.debug("%s is %s", left_name, left)
     logging.debug("%s is %s", right_name, right)
     try:
-        with allure.step("断言{}{}{}".format(left_name, op, right_name)):
-            allure.attach(json.dumps(left, indent=2,
-                                     ensure_ascii=False, cls=DateEncoder), str(left_name))
-            allure.attach(json.dumps(right, indent=2,
-                                     ensure_ascii=False, cls=DateEncoder), str(right_name))
+        if allure is not None:
+            with allure.step("断言{}{}{}".format(left_name, op, right_name)):
+                allure.attach(json.dumps(left, indent=2,
+                                         ensure_ascii=False, cls=DateEncoder), str(left_name))
+                allure.attach(json.dumps(right, indent=2,
+                                         ensure_ascii=False, cls=DateEncoder), str(right_name))
     except Exception:
         logging.debug("附加断言信息到 allure 失败, 已忽略")
     return None
@@ -317,33 +324,43 @@ def post_inputs(env):
 
 
 @pytest.fixture(scope='function', autouse=True)
-def render_inputs(env, request):
+def render_inputs(request):
     """
     替换inputs数据
+
+    惰性获取 env: 只有用例真正声明了 inputs 参数才需要 env 与渲染。
+    否则(如纯函数回归)不碰 env —— 避免 autouse 让 env/配置/凭据成为
+    所有测试的隐式依赖, 拖累 CI 云 runner 上无凭据的单元测试。
     """
-    if 'inputs' in request.fixturenames:
-        inputs = request.getfixturevalue('inputs')
-        render_result = render(env, inputs)
-        if isinstance(inputs, dict):
-            inputs.update(render_result)
-        elif isinstance(inputs, list):
-            del inputs[:]
-            inputs += render_result
+    if 'inputs' not in request.fixturenames:
+        return
+    env = request.getfixturevalue('env')
+    inputs = request.getfixturevalue('inputs')
+    render_result = render(env, inputs)
+    if isinstance(inputs, dict):
+        inputs.update(render_result)
+    elif isinstance(inputs, list):
+        del inputs[:]
+        inputs += render_result
 
 
 @pytest.fixture(scope='function', autouse=True)
-def render_expectation(env, request):
+def render_expectation(request):
     """
     替换expectation数据
+
+    同上: 惰性获取 env, 纯函数测试不触发配置加载。
     """
-    if 'expectation' in request.fixturenames:
-        expectation = request.getfixturevalue('expectation')
-        render_result = render(env, expectation)
-        if isinstance(expectation, dict):
-            expectation.update(render_result)
-        elif isinstance(expectation, list):
-            del expectation[:]
-            expectation += render_result
+    if 'expectation' not in request.fixturenames:
+        return
+    env = request.getfixturevalue('env')
+    expectation = request.getfixturevalue('expectation')
+    render_result = render(env, expectation)
+    if isinstance(expectation, dict):
+        expectation.update(render_result)
+    elif isinstance(expectation, list):
+        del expectation[:]
+        expectation += render_result
 
 
 @pytest.fixture(scope='session')
