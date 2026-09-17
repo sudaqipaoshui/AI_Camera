@@ -115,16 +115,27 @@ def make_grid8(src):
 
 
 def polys8():
-    """从 grid8.cell + inset_px 生成8个归一化点位矩形(右上->右下->左下->左上)。"""
+    """从 grid8.cell + inset_px 生成8个归一化点位矩形(右上->右下->左下->左上)。
+
+    ⚠️ 必须与 make_grid8() 的贴图坐标保持一致:
+       make_grid8 用 layouts 数组贴图, 而 layouts = [c*cw + ox, r*ch + oy],
+       即贴图时叠加了 origin 偏移。本函数若不加同样的 origin,
+       下发给设备的点位就会比实际画面偏 (ox-ins, oy-ins) 个像素
+       —— 遮挡场景下会把仅剩的可见人体切到框外, 导致该路彻底不出成绩。
+    """
     g = CFG["grid8"]
     cw, ch = g["cell"]
     ins = g["inset_px"]
     W, H = map(int, g["canvas"].split("x"))
+    ox, oy = g.get("origin", [0, 0])
     out = []
     for r in range(2):
         for c in range(4):
-            x0, x1 = c * cw + ins, (c + 1) * cw - ins
-            y0, y1 = r * ch + ins, (r + 1) * ch - ins
+            x0, x1 = c * cw + ox + ins, (c + 1) * cw + ox - ins
+            y0, y1 = r * ch + oy + ins, (r + 1) * ch + oy - ins
+            # 夹紧到画布内, 防止第2行因 origin 溢出导致点位越界
+            x0, x1 = max(0, x0), min(W, x1)
+            y0, y1 = max(0, y0), min(H, y1)
             out.append([x1 / W, y0 / H, x1 / W, y1 / H, x0 / W, y1 / H, x0 / W, y0 / H])
     return out
 
@@ -507,19 +518,48 @@ def analyze():
             rounds.append(cur)
         area_rounds[a] = rounds
 
+    # ---- 判定某路在某轮是否"有效" ----
+    # 背景: 人物遮挡会让设备认为"区域内有人"(in=true) 但永不进入 SPORTING, 成绩恒为 0。
+    # 这种 0 不是"算法算错", 而是"该路数据不可用"。若计入极差, 会把
+    # 真实的一致性指标从 28 虚高到 136 (见 rope area6 案例)。
+    #
+    # 但要注意区分两种"没进 SPORTING":
+    #   (a) 真·无数据 —— 该轮有大量采样点, 却全程没进过 SPORTING (如 rope area6, 6858 点) → 疑似遮挡
+    #   (b) 尾部残轮 —— 采集停止后残留的零星点, 本身不构成一轮 (如开合跳轮11 仅 82 点) → 不是异常
+    # 判据: 该轮采样点数是否达到一个"最小成轮规模"。正常一轮是全场 8 路共约 2000 个采样点。
+    MIN_ROUND_SAMPLES = 200
+
+    def is_valid(rd):
+        """该轮该路是否产出可用数据: 必须真正进入过 SPORTING。"""
+        return rd["sp0"] is not None
+
+    def is_tail_noise(rd):
+        """尾部残轮: 点数太少, 不构成完整一轮。"""
+        return rd["in_n"] < MIN_ROUND_SAMPLES
+
     lines = [f"各路轮数: { {a: len(v) for a, v in sorted(area_rounds.items())} }"]
     n_rounds = max((len(v) for v in area_rounds.values()), default=0)
-    acc_map, in_map = {}, {}
+    acc_map, in_map, invalid_map, noise_map = {}, {}, {}, {}
     lines.append("\n=== 逐轮 ===")
     for ri in range(n_rounds):
-        scores, accs = {}, {}
+        scores, accs, invalid = {}, {}, {}
         for a in sorted(area_rounds):
             rds = area_rounds[a]
             if ri >= len(rds):
                 continue
             rd = rds[ri]
-            scores[a] = rd["smax"]
             ii = in_map.setdefault(a, [0, 0]); ii[0] += rd["in_true"]; ii[1] += rd["in_n"]
+            if not is_valid(rd):
+                if is_tail_noise(rd):
+                    # 尾部残轮, 不算异常, 也不计极差
+                    noise_map.setdefault(a, 0); noise_map[a] += 1
+                else:
+                    # 该路数据不可用: 单独列出并标注原因
+                    invalid[a] = rd["smax"]
+                    invalid_map.setdefault(a, 0)
+                    invalid_map[a] += 1
+                continue
+            scores[a] = rd["smax"]
             g = None
             if GTYPE == "final":
                 # 计时计数项目(跳绳等): 该轮最终成绩smax 对比该路基准 scores[areaIndex-GBASE]
@@ -531,12 +571,20 @@ def analyze():
             if g and g > 0:
                 accs[a] = round(rd["smax"] / g * 100, 1)
                 acc_map.setdefault(a, []).append(rd["smax"] / g * 100)
-        if not scores:
+        if not scores and not invalid:
             continue
         vals = list(scores.values())
         sstr = ",".join(f"{a}:{s}" for a, s in scores.items())
         astr = ",".join(f"{a}:{v}" for a, v in accs.items())
-        lines.append(f"轮{ri:>2}: {sstr} | 极差={max(vals)-min(vals)} 均值={sum(vals)/len(vals):.1f} | 准确率%: {astr}")
+        # 极差/均值只取有效路; 无有效路时明确标注而不是显示 0
+        if vals:
+            spread = f"极差={max(vals)-min(vals)} 均值={sum(vals)/len(vals):.1f}"
+        else:
+            spread = "极差=-- 均值=-- (本轮无有效路)"
+        inv = ""
+        if invalid:
+            inv = " | 无效路(未进SPORTING,疑遮挡): " + ",".join(f"{a}:{s}" for a, s in invalid.items())
+        lines.append(f"轮{ri:>2}: {sstr}{' | ' if sstr else ''}{spread} | 准确率%: {astr}{inv}")
 
     lines.append("\n=== 各路汇总 ===")
     for a in sorted(in_map):
@@ -546,7 +594,21 @@ def analyze():
             lines.append(f"area{a}: 有效轮={len(accs)} 准确率 min={min(accs):.1f}% max={max(accs):.1f}% "
                          f"avg={sum(accs)/len(accs):.1f}% | inArea={inr:.0f}%")
         else:
-            lines.append(f"area{a}: 无有效轮 | inArea={inr:.0f}%")
+            nbad = invalid_map.get(a, 0)
+            why = f" | 无效轮={nbad} (未进入SPORTING, 疑似人物遮挡/点位问题)" if nbad else ""
+            lines.append(f"area{a}: 无有效轮{why} | inArea={inr:.0f}%")
+
+    # 数据完整性提示: 若存在无效路, 在报告里显式说明, 避免把"无数据"误读成"算法全错"
+    if invalid_map:
+        lines.append("\n=== 数据完整性 ===")
+        lines.append("以下路未产出可用数据(全程未进入 SPORTING), 其成绩 0 不代表算法错误:")
+        for a in sorted(invalid_map):
+            lines.append(f"  area{a}: 无效轮数={invalid_map[a]}")
+        lines.append("排查建议: 1) 该格是否被前方人物遮挡; 2) 贴图坐标与下发点位是否错位"
+                     "(见 run_test.py polys8 与 make_grid8 的 origin 处理)")
+    if noise_map:
+        lines.append(f"注: 另有尾部残轮(采样点<{MIN_ROUND_SAMPLES}, 采集结束后残留) 已自动忽略: "
+                     + ",".join(f"area{a}×{n}" for a, n in sorted(noise_map.items())))
     out = "\n".join(lines)
     print(out, flush=True)
     return out
@@ -575,6 +637,7 @@ def write_report(md_path, jsonl_path, analysis):
 
 # ---------- main ----------
 def main():
+    global FW_VERSION, RESTORE_NOTE
     if ARGS.dry_run:
         print("\n=== DRY-RUN 计划 ===", flush=True)
         print(f"项目={CFG['name']}(id={ITEM_ID}) 视频={VIDEO}", flush=True)
@@ -583,6 +646,7 @@ def main():
         print(f"采集 {ARGS.duration}s -> golden对齐分析 -> 报告到 {REPORTS}", flush=True)
         return
     if ARGS.analyze_only:  # 离线重分析已有采集数据(不碰设备)
+        RESTORE_NOTE = "未涉及(本次仅离线重分析, 未接触设备)"
         with open(ARGS.analyze_only, encoding="utf-8") as f:
             for ln in f:
                 try:
@@ -597,7 +661,6 @@ def main():
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     jsonl_path = os.path.join(REPORTS, f"{ARGS.item}_{ts}.jsonl")
     md_path = os.path.join(REPORTS, f"{ARGS.item}_{ts}.md")
-    global FW_VERSION, RESTORE_NOTE
     snap = None
     try:
         if not ARGS.skip_deploy:

@@ -101,3 +101,8 @@ SQL/*_data_*.sql
 .version
 
 # 注意: 不要忽略 *.txt —— 会误伤 requirements.txt
+
+# ReplayLab 配置备份 / 诊断产物(本地留档, 不入库)
+ReplayLab/items.json.bak_*
+ReplayLab/_item_tmp.json
+ReplayLab/_rtsp_tmp.json
